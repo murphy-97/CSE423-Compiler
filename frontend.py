@@ -1,12 +1,6 @@
 # CSE423 Compilers
 # backend.py: frontend systems for C-to-ASM compiler implemented in Python
 
-from enum import Enum
-
-class ERROR(Enum):
-	NUMARGS = 1
-	UNRECOVERABLE = 2
-
 ### Main method for frontend module
 def run_frontend(code_lines):
     """Takes a list of code lines and returns a list of processed code lines"""
@@ -16,12 +10,8 @@ def run_frontend(code_lines):
 
 ### Scanner/tokenizer for compiler frontend
 def run_scanner(code_lines):
-    """Reads source code and returns list of tokens"""
-    # TO DO: Implement scanner
-	if (len(sys.argv) == 1):
-		error(ERROR['NUMARGS'])
-
-	input = open(sys.argv[1], 'r')
+	"""Reads source code and returns list of tokens"""
+	input = code_lines
 	entire_doc = ""
 	replace_space_array = ["#", ";", "(", ")", "{", "}", "=", "==", "<", ">"]
 	replace_array = ["\n"]
@@ -45,21 +35,10 @@ def run_scanner(code_lines):
 			tokens_descriptive.append([token, "equal types"])
 		else:
 			tokens_descriptive.append([token, "string"])
-    return tokens_descriptive
+	return tokens_descriptive
 
 ### Parser for compiler frontend
 def run_parser(code_lines):
     """Parses tokens using language grammar"""
     # TO DO: Implement parser
     return code_lines
-
-import sys
-from enum import Enum
-
-class ERROR(Enum):
-	NUMARGS = 1
-
-def error(input):
-	if (input == ERROR['NUMARGS']):
-		print("Incorrect number of command line arguments")
-		exit(1)

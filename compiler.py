@@ -4,6 +4,7 @@
 # Import non-project modules
 import sys
 import getopt
+from enum import Enum
 # Import project modules
 import frontend
 import optimizer
@@ -11,6 +12,11 @@ import backend
 
 # Debug contstant for debug statements
 DEBUG = True
+
+class ERROR(Enum):
+    # Not used yet
+	INPUTARG = 1
+	UNRECOVERABLE = 2
 
 ### Main function for running this module
 def main():
@@ -74,12 +80,15 @@ def main():
 
                     # Write compiled file to disk
                     for line in code_source:
-                        code_out.write(line)
+                        # str() cast for testing at intermediate stages
+                        code_out.write(str(line)) 
 
             except OSError:
                 print("Failed to write output file '{}'".format(o_file))
             except:
                 print("Failed to compile '{}".format(i_file))
+                print("Error({0}): {1}".format(sys.exc_info()[0], sys.exc_info()[1]))
+
     except OSError:
         print("Failed to open input file '{}'".format(i_file))
 
@@ -93,6 +102,12 @@ def usage():
         "-o  Output file. Requires argument"
         "-h  Prints usage statement"
     )
+
+### Function for printing errors
+def error(input):
+	if (input == ERROR['ARGS']):
+		print("Incorrect number of command line arguments")
+		exit(1)
 
 # Boilerplate for calling main by running this module
 if __name__ == "__main__":
