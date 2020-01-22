@@ -5,6 +5,7 @@ from enum import Enum
 
 class ERROR(Enum):
 	NUMARGS = 1
+	UNRECOVERABLE = 2
 
 ### Main method for frontend module
 def run_frontend(code_lines):
