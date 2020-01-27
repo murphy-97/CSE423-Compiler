@@ -2,3 +2,11 @@ Members:
   Craig Rasband
   Hannah Murphy
   Morgan Edwards
+
+Usage: python compiler.py -i 'input-file'
+
+Optional arguments:
+-o       Output file. Requires argument
+-h       Prints usage statement
+--p-scn  Prints scanner output
+--p-prs  Prints parser output

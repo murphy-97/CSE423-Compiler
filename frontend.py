@@ -2,10 +2,23 @@
 # backend.py: frontend systems for C-to-ASM compiler implemented in Python
 
 ### Main method for frontend module
-def run_frontend(code_lines):
+def run_frontend(code_lines, print_scn, print_prs):
     """Takes a list of code lines and returns a list of processed code lines"""
-    code_lines = run_scanner(code_lines) #takes in a file name, returns a list of tokens
+    code_lines = run_scanner(code_lines)
+
+	# Command line option to print scanner output
+    if (print_scn):
+        print("\n====== SCANNER OUTPUT ======")
+        for line in code_lines:
+            print(str(line))
+
     code_lines = run_parser(code_lines)
+	# Command line option to print parser output
+    if (print_prs):
+        print("\n====== PARSER OUTPUT ======")
+        for line in code_lines:
+            print(str(line))
+
     return code_lines
 
 ### Scanner/tokenizer for compiler frontend

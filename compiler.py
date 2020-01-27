@@ -31,9 +31,24 @@ def main():
     i_file = ""
     o_file = ""
 
+    # Command line options/arguments
+    opt_print_scn = False   # Print scanner output in run_frontend()
+    opt_print_prs = False   # Print parser output in run_frontend()
+
     try:
         # Omit first argument (module name) by list slice
-        opts, args = getopt.getopt(sys.argv[1:],"hi:o:",["i_file=","o_file="])
+        opts, args = getopt.getopt(
+            sys.argv[1:],
+            "hi:o:",
+            [
+                # File I/O options
+                "i_file=",      # Specify input file
+                "o_file=",      # Specify output file
+                # Print statement options
+                "p-scn",        # Print scanner output
+                "p-prs"         # Print parser output
+            ]
+        )
     except getopt.GetoptError:
         usage()
         sys.exit(1)
@@ -48,6 +63,12 @@ def main():
 
         elif opt in ("-o", "--o_file"):
             o_file = arg
+
+        elif opt == '--p-scn':
+            opt_print_scn = True
+
+        elif opt == '--p-prs':
+            opt_print_prs = True
 
     # Require input file
     if not i_file:
@@ -73,7 +94,11 @@ def main():
                     # use code_out.write("ASM goes here") to write new code
                     
                     # !! MAIN COMPILER FUNCTIONALITY CALLED HERE !!
-                    code_source = frontend.run_frontend(code_source)
+                    code_source = frontend.run_frontend(
+                        code_source,
+                        opt_print_scn,  # Command line arg: print scanner out
+                        opt_print_prs   # Command line arg: print parser out
+                    )
                     code_source = optimizer.run_optimizer(code_source)
                     code_source = backend.run_backend(code_source)
                     # !! END MAIN COMPILER FUNCTIONALITY !!
@@ -95,13 +120,17 @@ def main():
 ### Prints usage for the module
 def usage():
     """Prints module usage statement"""
-    print("Usage: python compiler -i 'input-file'\n")
+    print("\nUsage: python compiler.py -i 'input-file'\n")
     
     print(
         "Optional arguments:\n" +
-        "-o  Output file. Requires argument"
-        "-h  Prints usage statement"
+        " -o       Output file. Requires argument 'output-file'\n" +
+        " -h       Prints usage statement\n" +
+        " --p-scn  Prints scanner output\n" +
+        " --p-prs  Prints parser output\n"
     )
+
+    print("If no ouptut file is specified, output written is to 'input-file'.ASM")
 
 ### Function for printing errors
 def error(input):
