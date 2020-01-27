@@ -27,7 +27,7 @@ def run_scanner(code_lines):
 	input = code_lines
 	entire_doc = ""
 	replace_space_array = ["#", ";", "(", ")", "{", "}", "=", "==", "<", ">"]
-	replace_array = ["\n"]
+	# replace_array = ["\n"] # Unused variable. Commented out
 	tokens_descriptive = []
 
 	for line in input:
