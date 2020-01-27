@@ -37,7 +37,7 @@ def main():
 
     try:
         # Omit first argument (module name) by list slice
-        opts, args = getopt.getopt(
+        opts, _ = getopt.getopt(
             sys.argv[1:],
             "hi:o:",
             [
