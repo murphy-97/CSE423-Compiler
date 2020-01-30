@@ -32,11 +32,14 @@ def run_scanner(code_lines):
 
 	for line in input:
 		entire_doc = entire_doc + line
+
 	for value in replace_space_array:
 		entire_doc = entire_doc.replace(value, " "+value+" ")
+
 	entire_doc = ' '.join(entire_doc.split())
 	entire_doc = entire_doc.replace(" ", "$replace$")
 	tokens_base = entire_doc.split("$replace$")
+
 	for token in tokens_base:
 		if (token.isnumeric()):
 			tokens_descriptive.append([token, "int"])
@@ -48,6 +51,10 @@ def run_scanner(code_lines):
 			tokens_descriptive.append([token, "equal types"])
 		else:
 			tokens_descriptive.append([token, "string"])
+
+	# NOTE: In the future, when detecting an unrecongized token, raise an error
+	# raise Exception(error.ERR_BAD_TOKEN + " '" + token + "'")
+
 	return tokens_descriptive
 
 ### Parser for compiler frontend

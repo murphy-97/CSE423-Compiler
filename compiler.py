@@ -9,14 +9,10 @@ from enum import Enum
 import frontend
 import optimizer
 import backend
+import errors
 
 # Debug contstant for debug statements
 DEBUG = True
-
-class ERROR(Enum):
-    # Not used yet
-	INPUTARG = 1
-	UNRECOVERABLE = 2
 
 ### Main function for running this module
 def main():
@@ -72,7 +68,7 @@ def main():
 
     # Require input file
     if not i_file:
-        print("ERROR: Input file not specified")
+        print("Error: " + errors.ERR_NO_INPUT)
         usage()
         sys.exit(1)
 
@@ -108,14 +104,14 @@ def main():
                         # str() cast for testing at intermediate stages
                         code_out.write(str(line)) 
 
-            except OSError:
-                print("Failed to write output file '{}'".format(o_file))
-            except:
+            except OSError as e:
+                print("OS Error: " + str(e))
+            except Exception as e:
                 print("Failed to compile '{}".format(i_file))
-                print("Error({0}): {1}".format(sys.exc_info()[0], sys.exc_info()[1]))
+                print("Error: " + str(e))
 
-    except OSError:
-        print("Failed to open input file '{}'".format(i_file))
+    except OSError as e:
+        print("OS Error: " + str(e))
 
 ### Prints usage for the module
 def usage():
@@ -131,12 +127,6 @@ def usage():
     )
 
     print("If no ouptut file is specified, output written is to 'input-file'.ASM")
-
-### Function for printing errors
-def error(input):
-	if (input == ERROR['ARGS']):
-		print("Incorrect number of command line arguments")
-		exit(1)
 
 # Boilerplate for calling main by running this module
 if __name__ == "__main__":
