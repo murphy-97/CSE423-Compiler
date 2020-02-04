@@ -1,6 +1,8 @@
 # CSE423 Compilers
 # backend.py: frontend systems for C-to-ASM compiler implemented in Python
 
+import re
+
 ### Main method for frontend module
 def run_frontend(code_lines, print_scn, print_prs):
     """Takes a list of code lines and returns a list of processed code lines"""
@@ -30,8 +32,19 @@ def run_scanner(code_lines):
 	# replace_array = ["\n"] # Unused variable. Commented out
 	tokens_descriptive = []
 
+	#create string of input code
 	for line in input:
 		entire_doc = entire_doc + line
+
+	#remove comments
+	entire_doc = re.sub(re.compile("//.*?\n"), "\n", entire_doc)
+	entire_doc = re.sub(re.compile("/\*.*?\*/"), "", entire_doc)
+
+	entire_doc = entire_doc.replace("$", "")
+
+	strings_array = re.findall(r'".*?"', entire_doc)
+	for string in strings_array:
+		entire_doc = entire_doc.replace(string, "$", 1)
 
 	for value in replace_space_array:
 		entire_doc = entire_doc.replace(value, " "+value+" ")
@@ -39,6 +52,11 @@ def run_scanner(code_lines):
 	entire_doc = ' '.join(entire_doc.split())
 	entire_doc = entire_doc.replace(" ", "$replace$")
 	tokens_base = entire_doc.split("$replace$")
+
+
+	for i in range (1, len(tokens_base)):
+		if (tokens_base[i] == "$"):
+			tokens_base[i] = strings_array.pop(0)
 
 	for token in tokens_base:
 		try:
@@ -69,7 +87,9 @@ def run_scanner(code_lines):
 	# NOTE: In the future, when detecting an unrecongized token, raise an error
 	# raise Exception(error.ERR_BAD_TOKEN + " '" + token + "'")
 
-	return tokens_descriptive
+	#for token in tokens_descriptive:
+	#	print(token)
+	 return tokens_descriptive
 
 ### Parser for compiler frontend
 def run_parser(code_lines):
