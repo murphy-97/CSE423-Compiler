@@ -41,9 +41,23 @@ def run_scanner(code_lines):
 	tokens_base = entire_doc.split("$replace$")
 
 	for token in tokens_base:
-		if (token.isnumeric()):
+		try:
+			# Token is an int
+			int(token)
 			tokens_descriptive.append([token, "int"])
-		elif (token == "not" or token == "and" or token == "or"):
+			continue
+		except:
+			# Token is not an int
+			try:
+				# Token is a float
+				float(token)
+				tokens_descriptive.append([token, "float"])
+				continue
+			except:
+				# Token is neither an int nor a float
+				pass
+				
+		if (token == "not" or token == "and" or token == "or"):
 			tokens_descriptive.append([token, "bool"])
 		elif ("<" in token or ">" in token or "!" in token):
 			tokens_descriptive.append([token, "equal types"])
