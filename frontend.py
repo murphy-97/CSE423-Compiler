@@ -85,34 +85,49 @@ def run_scanner(code_lines):
 		try:
 			# Token is an int
 			int(token)
-			tokens_descriptive.append([token, "int"])
+			tokens_descriptive.append([token, "intConst"])
 			continue
 		except:
 			# Token is not an int
 			try:
 				# Token is a float
 				float(token)
-				tokens_descriptive.append([token, "float"])
+				tokens_descriptive.append([token, "floatConst"])
 				continue
 			except:
 				# Token is neither an int nor a float
 				pass
 				
-		if (token == "not" or token == "and" or token == "or"):
+		if (token in ["not", "and", "or"]):
 			tokens_descriptive.append([token, "bool"])
 		elif ("<" in token or ">" in token or "!" in token):
-			tokens_descriptive.append([token, "equal types"])
+			tokens_descriptive.append([token, "comparison"])
 		elif ("==" in token):
-			tokens_descriptive.append([token, "equal types"])
+			tokens_descriptive.append([token, "comparison"])
+		elif (token == "="):
+			tokens_descriptive.append([token, "assignment"])
+		elif (token in [
+			"auto", "break", "else", "long", "switch", "case", "register",
+			"typedef", "extern", "return", "union", "continue", "for", "signed",
+			"do", "if", "static", "while", "default", "goto", "sizeof",
+			"volatile", "const", "unsigned"
+		]):
+			tokens_descriptive.append([token, "keyword"])
+		elif (token in [
+			"double", "int", "struct", "long", "enum", "char", "void", "float",
+			"float", "short"
+		]):
+			tokens_descriptive.append([token, "typeKeyword"])
+		elif (re.match(r"/^[a-zA-Z_][a-zA-Z0-9_]*$/", token)):
+			# For some reason this isn't catching anything....
+			tokens_descriptive.append([token], "identifier")
 		else:
 			tokens_descriptive.append([token, "string"])
 
 	# NOTE: In the future, when detecting an unrecongized token, raise an error
 	# raise Exception(error.ERR_BAD_TOKEN + " '" + token + "'")
 
-	#for token in tokens_descriptive:
-	#	print(token)
-	 return tokens_descriptive
+	return tokens_descriptive
 
 ### Parser for compiler frontend
 def run_parser(code_lines):

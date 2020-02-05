@@ -4,7 +4,6 @@
 # Import non-project modules
 import sys
 import getopt
-from enum import Enum
 # Import project modules
 import frontend
 import optimizer
