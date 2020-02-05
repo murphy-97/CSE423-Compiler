@@ -39,12 +39,6 @@ def run_scanner(code_lines):
 	#remove comments
 	entire_doc = re.sub(re.compile("//.*?\n"), "\n", entire_doc)
 	entire_doc = re.sub(re.compile("/\*.*?\*/"), "", entire_doc)
-	entire_doc = re.sub(re.compile("++"), "$plus$", entire_doc)
-	entire_doc = re.sub(re.compile("--"), "$minus$", entire_doc)
-	entire_doc = re.sub(re.compile("=="), "$equals$", entire_doc)
-	entire_doc = re.sub(re.compile("<<"), "$left$", entire_doc)
-	entire_doc = re.sub(re.compile(">>"), "$right$", entire_doc)
-
 
 	#remove the non-allowed character $
 	entire_doc = entire_doc.replace("$", "")
@@ -55,6 +49,12 @@ def run_scanner(code_lines):
 	for string in strings_array:
 		entire_doc = entire_doc.replace(string, "$string$", 1)
 
+	entire_doc = entire_doc.replace("++", "$plus$")
+	entire_doc = entire_doc.replace("--", "$minus$")
+	entire_doc = entire_doc.replace("==", "$equals$")
+	entire_doc = entire_doc.replace("<<", "$left$")
+	entire_doc = entire_doc.replace(">>", "$right$")
+
 	#add spaces arround all individual tokens for formating
 	for value in replace_space_array:
 		entire_doc = entire_doc.replace(value, " "+value+" ")
@@ -64,10 +64,13 @@ def run_scanner(code_lines):
 	#add back in double operands
 	entire_doc = entire_doc.replace("$plus$", " ++ ")
 	entire_doc = entire_doc.replace("$minus$", " -- ")
-	entire_doc = entire_doc.replace("$equals$, " == ")
+	entire_doc = entire_doc.replace("$equals$", " == ")
 	entire_doc = entire_doc.replace("$left$", " << ")
 	entire_doc = entire_doc.replace("$right$", " >> ")
 	
+	#remove extra spaces
+	entire_doc = ' '.join(entire_doc.split())
+
 	#split document into tokens
 	entire_doc = entire_doc.replace(" ", "$replace$")
 	tokens_base = entire_doc.split("$replace$")
