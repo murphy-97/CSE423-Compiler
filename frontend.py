@@ -103,7 +103,7 @@ def run_scanner(code_lines):
 			tokens_descriptive.append([token, "controlChar"])
 		elif (token in ["<", "<=", ">", ">=", "==", "!="]):
 			tokens_descriptive.append([token, "comparison"])
-		elif (token == "="):
+		elif (token == "=", "+=", "-=", "*=", "/=", "%="):
 			tokens_descriptive.append([token, "assignment"])
 		elif (token in ["+", "-", "*", "/", "%"]):
 			tokens_descriptive.append([token, "operator"])
