@@ -1,7 +1,10 @@
 # CSE423 Compilers
 # backend.py: frontend systems for C-to-ASM compiler implemented in Python
 
+# Import non-project modules
 import re
+# Import project modules
+import errors
 
 ### Main method for frontend module
 def run_frontend(code_lines, print_scn, print_prs):
@@ -28,7 +31,7 @@ def run_scanner(code_lines):
 	"""Reads source code and returns list of tokens"""
 	input = code_lines
 	entire_doc = ""
-	replace_space_array = ["#", ";", "(", ")", "{", "}", "=", "<", ">", "+", "-"]
+	replace_space_array = [";", "(", ")", "{", "}", "=", "<", ">", "+", "-", ","]
 	# replace_array = ["\n"] # Unused variable. Commented out
 	tokens_descriptive = []
 
@@ -75,13 +78,9 @@ def run_scanner(code_lines):
 	entire_doc = entire_doc.replace(" ", "$replace$")
 	tokens_base = entire_doc.split("$replace$")
 
-	#place all unedited strings back into program
-	for i in range (1, len(tokens_base)):
-		if (tokens_base[i] == "$string$"):
-			tokens_base[i] = strings_array.pop(0)
-
 	#categorize all tokens
 	for token in tokens_base:
+
 		try:
 			# Token is an int
 			int(token)
@@ -100,12 +99,16 @@ def run_scanner(code_lines):
 				
 		if (token in ["not", "and", "or"]):
 			tokens_descriptive.append([token, "bool"])
-		elif ("<" in token or ">" in token or "!" in token):
-			tokens_descriptive.append([token, "comparison"])
-		elif ("==" in token):
+		elif (token in ["(", ")", "{", "}", "[", "]", ",", ";"]):
+			tokens_descriptive.append([token, "controlChar"])
+		elif (token in ["<", "<=", ">", ">=", "==", "!="]):
 			tokens_descriptive.append([token, "comparison"])
 		elif (token == "="):
 			tokens_descriptive.append([token, "assignment"])
+		elif (token in ["+", "-", "*", "/", "%"]):
+			tokens_descriptive.append([token, "operator"])
+		elif (token in ["++", "--"]):
+			tokens_descriptive.append([token, "increment"])
 		elif (token in [
 			"auto", "break", "else", "long", "switch", "case", "register",
 			"typedef", "extern", "return", "union", "continue", "for", "signed",
@@ -113,19 +116,24 @@ def run_scanner(code_lines):
 			"volatile", "const", "unsigned"
 		]):
 			tokens_descriptive.append([token, "keyword"])
+		elif (token in ["#include", "#define"]):
+			tokens_descriptive.append([token, "preDirective"])
 		elif (token in [
 			"double", "int", "struct", "long", "enum", "char", "void", "float",
 			"float", "short"
 		]):
 			tokens_descriptive.append([token, "typeKeyword"])
-		elif (re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", token)):
+		elif (re.match(r"([a-zA-Z0-9\s_\\.\-\(\):])+(.h)$", token)):
 			# For some reason this isn't catching anything....
+			tokens_descriptive.append([token, "fileImport"])
+		elif (re.match(r"^[a-zA-z_][a-zA-Z0-9_]*$", token)):
 			tokens_descriptive.append([token, "identifier"])
-		else:
+		elif (token == "$string$"):
+			token = strings_array.pop(0)
 			tokens_descriptive.append([token, "string"])
-
-	# NOTE: In the future, when detecting an unrecongized token, raise an error
-	# raise Exception(error.ERR_BAD_TOKEN + " '" + token + "'")
+		else:
+			raise Exception(errors.ERR_BAD_TOKEN + " '" + token + "'")
+			# tokens_descriptive.append([token, "UNRECOGNIZED"])
 
 	return tokens_descriptive
 
