@@ -118,9 +118,9 @@ def run_scanner(code_lines):
 			"float", "short"
 		]):
 			tokens_descriptive.append([token, "typeKeyword"])
-		elif (re.match(r"/^[a-zA-Z_][a-zA-Z0-9_]*$/", token)):
+		elif (re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", token)):
 			# For some reason this isn't catching anything....
-			tokens_descriptive.append([token], "identifier")
+			tokens_descriptive.append([token, "identifier"])
 		else:
 			tokens_descriptive.append([token, "string"])
 
