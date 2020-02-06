@@ -6,6 +6,7 @@ Written for Python3<br />
 Required Python libaries:<br />
   sys<br />
   Enum<br />
+  treelib<br />
 
 Members:<br />
   Craig Rasband<br />
