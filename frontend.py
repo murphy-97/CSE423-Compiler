@@ -3,8 +3,10 @@
 
 # Import non-project modules
 import re
+from treelib import Node, Tree
 # Import project modules
 import errors
+
 
 ### Main method for frontend module
 def run_frontend(code_lines, print_scn, print_prs):
@@ -32,6 +34,8 @@ def run_scanner(code_lines):
 	input = code_lines
 	entire_doc = ""
 	replace_space_array = [";", "(", ")", "{", "}", "=", "<", ">", "+", "-", ","]
+	single_tokens = ["(", ")", "{", "}", ",", ";", "=", "++", "--", "+=", "-=", "*=", "/=", "true", "false"]
+
 	# replace_array = ["\n"] # Unused variable. Commented out
 	tokens_descriptive = []
 
@@ -54,6 +58,11 @@ def run_scanner(code_lines):
 
 	entire_doc = entire_doc.replace("++", "$plus$")
 	entire_doc = entire_doc.replace("--", "$minus$")
+	entire_doc = entire_doc.replace("+=", "$plus_equals$")
+	entire_doc = entire_doc.replace("!=", "$not_equals$")
+	entire_doc = entire_doc.replace("-=", "$minus_equals$")
+	entire_doc = entire_doc.replace("*=", "$mult_equals$")
+	entire_doc = entire_doc.replace("/=", "$divide_equals$")
 	entire_doc = entire_doc.replace("==", "$equals$")
 	entire_doc = entire_doc.replace("<<", "$left$")
 	entire_doc = entire_doc.replace(">>", "$right$")
@@ -67,6 +76,11 @@ def run_scanner(code_lines):
 	#add back in double operands
 	entire_doc = entire_doc.replace("$plus$", " ++ ")
 	entire_doc = entire_doc.replace("$minus$", " -- ")
+	entire_doc = entire_doc.replace("$plus_equals$", " += ")
+	entire_doc = entire_doc.replace("$not_equals$", " != ")
+	entire_doc = entire_doc.replace("$minus_equals$", " -= ")
+	entire_doc = entire_doc.replace("$mult_equals$", " *= ")
+	entire_doc = entire_doc.replace("$divide_equals$", " /= ")
 	entire_doc = entire_doc.replace("$equals$", " == ")
 	entire_doc = entire_doc.replace("$left$", " << ")
 	entire_doc = entire_doc.replace("$right$", " >> ")
@@ -84,31 +98,36 @@ def run_scanner(code_lines):
 		try:
 			# Token is an int
 			int(token)
-			tokens_descriptive.append([token, "intConst"])
+			tokens_descriptive.append([token, "NUMCONST"])
 			continue
 		except:
 			# Token is not an int
 			try:
 				# Token is a float
 				float(token)
-				tokens_descriptive.append([token, "floatConst"])
+				tokens_descriptive.append([token, "FLOATCONST"])
 				continue
 			except:
 				# Token is neither an int nor a float
 				pass
 				
-		if (token in ["not", "and", "or"]):
-			tokens_descriptive.append([token, "bool"])
-		elif (token in ["(", ")", "{", "}", "[", "]", ",", ";"]):
-			tokens_descriptive.append([token, "controlChar"])
-		elif (token in ["<", "<=", ">", ">=", "==", "!="]):
-			tokens_descriptive.append([token, "comparison"])
-		elif (token == "=", "+=", "-=", "*=", "/=", "%="):
-			tokens_descriptive.append([token, "assignment"])
-		elif (token in ["+", "-", "*", "/", "%"]):
-			tokens_descriptive.append([token, "operator"])
-		elif (token in ["++", "--"]):
-			tokens_descriptive.append([token, "increment"])
+		if (token in ["+", "-"]): #
+			tokens_descriptive.append([token, "sumop"])
+		elif (token in ["&&"]): #
+			tokens_descriptive.append([token, "&&"])
+		elif (token in ["||"]): #
+			tokens_descriptive.append([token, "||"])
+		elif (token in ["!"]): #
+			tokens_descriptive.append([token, "!"])
+		elif (token in ["-", "*", "?"]): #
+			tokens_descriptive.append([token, "unaryop"])
+		elif (token in ["*", "/", "%"]): #
+			tokens_descriptive.append([token, "mulop"])
+		elif (token in ["<=", "<", ">", ">=", "==", "!="]): #
+			tokens_descriptive.append([token, "relop"])
+		elif (token in single_tokens): #
+			tokens_descriptive.append([token, token])
+
 		elif (token in [
 			"auto", "break", "else", "long", "switch", "case", "register",
 			"typedef", "extern", "return", "union", "continue", "for", "signed",
@@ -122,23 +141,33 @@ def run_scanner(code_lines):
 			"double", "int", "struct", "long", "enum", "char", "void", "float",
 			"float", "short"
 		]):
-			tokens_descriptive.append([token, "typeKeyword"])
+			tokens_descriptive.append([token, "typeSpecifier"])
 		elif (re.match(r"([a-zA-Z0-9\s_\\.\-\(\):])+(.h)$", token)):
 			# For some reason this isn't catching anything....
 			tokens_descriptive.append([token, "fileImport"])
 		elif (re.match(r"^[a-zA-z_][a-zA-Z0-9_]*$", token)):
-			tokens_descriptive.append([token, "identifier"])
+			tokens_descriptive.append([token, "ID"])
 		elif (token == "$string$"):
 			token = strings_array.pop(0)
-			tokens_descriptive.append([token, "string"])
+			tokens_descriptive.append([token, "STRINGCONST"])
 		else:
 			raise Exception(errors.ERR_BAD_TOKEN + " '" + token + "'")
 			# tokens_descriptive.append([token, "UNRECOGNIZED"])
 
+# 	for token in tokens_descriptive:
+# 		print(token)
 	return tokens_descriptive
 
 ### Parser for compiler frontend
 def run_parser(code_lines):
     """Parses tokens using language grammar"""
-    # TO DO: Implement parser
+	output = ""
+	tree = Tree()
+	tree.create_node("Harry", "harry")  # root node
+	tree.create_node("Jane", "jane", parent="harry")
+	tree.create_node("Bill", "bill", parent="harry")
+	tree.create_node("Diane", "diane", parent="jane")
+	tree.create_node("Mary", "mary", parent="diane")
+	tree.create_node("Mark", "mark", parent="jane")
+	tree.show()
     return code_lines
