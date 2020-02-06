@@ -160,14 +160,30 @@ def run_scanner(code_lines):
 
 ### Parser for compiler frontend
 def run_parser(code_lines):
-    """Parses tokens using language grammar"""
 	output = ""
-	tree = Tree()
-	tree.create_node("Harry", "harry")  # root node
-	tree.create_node("Jane", "jane", parent="harry")
-	tree.create_node("Bill", "bill", parent="harry")
-	tree.create_node("Diane", "diane", parent="jane")
-	tree.create_node("Mary", "mary", parent="diane")
-	tree.create_node("Mark", "mark", parent="jane")
-	tree.show()
-    return code_lines
+	grammar = {}
+	for line in grammar_file:
+		line = line.replace("\n", "")
+		tmp_list = line.split("~")
+		values = tmp_list[1]
+		values = ' '.join(values.split())
+		values = values.split("|")
+		for i in range(0, len(values)):
+			values[i] = ' '.join(values[i].split())
+			values[i] = values[i].split(" ")
+			values[i] = [j for j in values[i] if j]
+		grammar[tmp_list[0]] = values
+		# print(values)
+
+	# tree = Tree()
+	# tree.create_node("Harry", "harry")  # root node
+	# tree.create_node("Jane", "jane", parent="harry")
+	# tree.create_node("Bill", "bill", parent="harry")
+	# tree.create_node("Diane", "diane", parent="jane")
+	# tree.create_node("Mary", "mary", parent="diane")
+	# tree.create_node("Mark", "mark", parent="jane")
+	# tree.show()
+
+	#Parses tokens using language grammar
+	# TO DO: Implement parser
+	return output
