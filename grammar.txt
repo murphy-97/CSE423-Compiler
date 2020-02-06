@@ -1,0 +1,41 @@
+program → declarationList
+declarationList → declarationList declaration | declaration 
+declaration → varDeclaration | funDeclaration
+varDeclaration → typeSpecifier varDeclInitialize ;
+ParamDeclaration → typeSpecifier ID ;
+varDeclInitialize → ID simpleExpression
+typeSpecifier → int | bool | char
+funDeclaration → typeSpecifier ID ( params ) compoundStmt
+params → paramList | ε
+paramList → ParamDeclaration , paramList | ParamDeclaration
+
+statement → expressionStmt | compoundStmt | selectionStmt | iterationStmt | returnStmt | breakStmt
+18. expressionStmt → expression ; | ;
+compoundStmt → { localDeclarations statementList }
+localDeclarations → varDeclaration localDeclarations | ε
+
+statementList → statementList statement | ε
+22. elsifList → elsifList elsif simpleExpression then statement | ε
+23. selectionStmt → if simpleExpression then statement elsifList | if simpleExpression then statement elsifList else statement
+24. iterationRange → ID = simpleExpression .. simpleExpression | ID = simpleExpression .. simpleExpression : simpleExpression
+iterationStmt → while simpleExpression do statement | loop forever statement | loop iterationRange do statement
+returnStmt → return ; | return expression ;
+breakStmt → break ;
+expression → ID = expression | ID += expression | ID −= expression | ID ∗= expression | ID /= expression | ID ++ | ID −− | simpleExpression
+simpleExpression → simpleExpression || andExpression | andExpression
+andExpression → andExpression && unaryRelExpression | unaryRelExpression
+unaryRelExpression → !& unaryRelExpression | relExpression
+relExpression → sumExpression relop sumExpression | sumExpression
+relop → <= | < | > | >= | == | !=
+sumExpression → sumExpression sumop mulExpression | mulExpression
+sumop → + | −
+mulExpression → mulExpression mulop unaryExpression | unaryExpression
+mulop → ∗ | / | %
+unaryExpression → unaryop unaryExpression | factor
+unaryop → − | ∗ | ?
+factor → immutable | ID
+immutable → ( expression ) | call | constant
+call→ID(args)
+args → argList | ε
+argList → argList , expression | expression
+constant → NUMCONST | FLOATCONST | CHARCONST | STRINGCONST | true | false
