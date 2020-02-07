@@ -5,8 +5,9 @@
 import re
 from treelib import Node, Tree
 import sys
+from collections import OrderedDict
 # Import project modules
-# import errors
+import errors
 
 
 ### Main method for frontend module
@@ -127,12 +128,14 @@ def run_scanner(code_lines):
 			tokens_descriptive.append([token, "mulop"])
 		elif (token in ["<=", "<", ">", ">=", "==", "!="]): #
 			tokens_descriptive.append([token, "relop"])
+		elif (token in ["return"]): #
+			tokens_descriptive.append([token, "return"])
 		elif (token in single_tokens): #
 			tokens_descriptive.append([token, token])
 
 		elif (token in [
 			"auto", "break", "else", "long", "switch", "case", "register",
-			"typedef", "extern", "return", "union", "continue", "for", "signed",
+			"typedef", "extern", "union", "continue", "for", "signed",
 			"do", "if", "static", "while", "default", "goto", "sizeof",
 			"volatile", "const", "unsigned"
 		]):
@@ -156,31 +159,127 @@ def run_scanner(code_lines):
 			raise Exception(errors.ERR_BAD_TOKEN + " '" + token + "'")
 			# tokens_descriptive.append([token, "UNRECOGNIZED"])
 
-# 	for token in tokens_descriptive:
-# 		print(token)
+	# for token in tokens_descriptive:
+	# 	print(token)
 	return tokens_descriptive
 
 ### Parser for compiler frontend
 def run_parser(tokens, grammar):
 	output = ""
+	cond_pass = 0
+	cur_token = "program"
+	cur_node = "program"
+	stack = []
+	list_of_tokens = []
 
 	tree = Tree()
-	tree.create_node("Harry", "harry")  # root node
-	tree.create_node("Jane", "jane", parent="harry")
-	tree.create_node("Bill", "bill", parent="harry")
-	tree.create_node("Diane", "diane", parent="jane")
-	tree.create_node("Mary", "mary", parent="diane")
-	tree.create_node("Mark", "mark", parent="jane")
-	tree.show()
+	#create root node
+	tree.create_node(cur_token, cur_token)  # root node
+	# tree.create_node("Jane", "jane", parent="harry")
+	# tree.create_node("Bill", "bill", parent="harry")
+	# tree.create_node("Diane", "diane", parent="jane")
+	# tree.create_node("Mary", "mary", parent="diane")
+	# tree.create_node("Mark", "mark", parent="jane")
+	# tree.show()
+
+	for j in range(0, len(tokens)):
+		if (tokens[j][0] == "main"):
+			j = j - 1
+			break
+
+	i = 0
+	for i in range (j, len(tokens)):
+		list_of_tokens.append(tokens[i])
+		result = check_rules(cur_node, list_of_tokens, grammar)
+		if (result[0] > 1):
+			continue
+		elif (result[0] == 1):
+			#special cases for rules that include blocks and parenthesies?
+			if (result[1][0] == "funDeclaration"):
+				k = 0
+				# while (tokens[i] != ")"):
+
+				list_of_tokens.pop()
+				list_of_tokens.pop()
+				list_of_tokens.pop()
+			continue
+			#push onto tree
+			#pop stuff pushed
+		elif(result[0] == 0):
+			#reject
+			exit(1)
+			
 
 	#Parses tokens using language grammar
 	# TO DO: Implement parser
 	return output
 
+#checks if the current token should result in:
+#rejection, (0 matches)
+#possible acceptance, (>=1 match)
+#accept, (1 match and complete rule)
+def check_rules(cur_node, tokens, grammar):
+	# print(tokens)
+	# print(grammar["funDeclaration"])
+	stack_possible_matches = []
+	stack_actual_matches = []
+	stack = []
+
+	for elem in grammar:
+		for rule in grammar[elem]:
+			if (rule[:len(tokens)] == get_some_elems_of_list(tokens, 1)):
+				if elem not in stack_possible_matches:
+					stack_possible_matches.append(elem)
+				# print(tokens)
+	
+	tmp_rules = grammar[cur_node]
+	for elem in stack_possible_matches:
+		# if that rule can appear after cur_node
+		if (is_possible_rule(cur_node, elem, grammar)):
+			stack_actual_matches.append(elem)
+
+	if (len(stack_actual_matches) == 1):
+		print(stack_actual_matches)
+		print("accept this line")
+		print("fix handeling of blocks and things in parenthesies. That is why nothing is accepted after a funDeclaration")
+	return ((len(stack_actual_matches), stack_actual_matches))
+
+#checks if the current token is allwed after the previous token
+def is_possible_rule(cur_node, match, grammar):
+	stack = []
+	tmp_rules = grammar[cur_node]
+	for elem in tmp_rules:
+		stack.append(elem)
+	while (len(stack) != 0):
+		elem = stack.pop()
+		index = get_index_in_dict(grammar, elem)
+		i = 0
+		for key, value in grammar.items():
+			if (i == index):
+				break
+			for rule in value:
+				# print(elem)
+				if (rule == elem):
+					stack.append(key)
+					return 1
+			i = i + 1
+
+#gets index of key in a ordered dictionary
+def get_index_in_dict(grammar, match):
+	i = 0
+	for key, value in grammar.items():
+		if (key == match):
+			return i
+		i = i + 1
+
+#gets elements of list of lists by shared index
+def get_some_elems_of_list(input, n):
+	return [item[n] for item in input]
+
 #parses a input grammar file and outputs
 #a properly formated dictionary
 def parse_grammar(grammar_file):
-	grammar = {}
+	grammar = OrderedDict()
 	for line in grammar_file:
 		line = line.replace("\n", "")
 		tmp_list = line.split("~")
@@ -191,9 +290,8 @@ def parse_grammar(grammar_file):
 			values[i] = ' '.join(values[i].split())
 			values[i] = values[i].split(" ")
 			values[i] = [j for j in values[i] if j]
-		grammar[tmp_list[0]] = values
+		grammar[' '.join(tmp_list[0].split())] = values
 	return(grammar)
-
 
 if __name__ == '__main__':
 	if (len(sys.argv) < 2):
