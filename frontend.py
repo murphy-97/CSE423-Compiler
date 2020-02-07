@@ -162,7 +162,7 @@ def run_scanner(code_lines):
 	return tokens_descriptive
 
 ### Parser for compiler frontend
-def run_parser(code_lines):
+def run_parser(tokens, grammar):
 	output = ""
 
 	# tree = Tree()
