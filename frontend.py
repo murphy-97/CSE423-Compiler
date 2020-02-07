@@ -292,11 +292,3 @@ def parse_grammar(grammar_file):
 			values[i] = [j for j in values[i] if j]
 		grammar[' '.join(tmp_list[0].split())] = values
 	return(grammar)
-
-if __name__ == '__main__':
-	if (len(sys.argv) < 2):
-		print("No input file")
-		exit(1)
-
-	input_file = open(sys.argv[1], "r")
-	run_frontend(input_file, 0, 0)
