@@ -4,6 +4,7 @@
 # Import non-project modules
 import re
 from treelib import Node, Tree
+import sys
 # Import project modules
 # import errors
 
@@ -195,5 +196,9 @@ def parse_grammar(grammar_file):
 
 
 if __name__ == '__main__':
-	input_file = open('hello.c', "r")
+	if (len(sys.argv) < 2):
+		print("No input file")
+		exit(1)
+
+	input_file = open(sys.argv[1], "r")
 	run_frontend(input_file, 0, 0)
