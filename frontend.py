@@ -10,23 +10,26 @@ import errors
 
 ### Main method for frontend module
 def run_frontend(code_lines, print_scn, print_prs):
-    """Takes a list of code lines and returns a list of processed code lines"""
-    code_lines = run_scanner(code_lines)
+	"""Takes a list of code lines and returns a list of processed code lines"""
+	tokens = run_scanner(code_lines)
+
+	grammar = parse_grammar(open('grammar.txt', "r"))
+	ast = run_parser(tokens, grammar)
 
 	# Command line option to print scanner output
-    if (print_scn):
-        print("\n====== SCANNER OUTPUT ======")
-        for line in code_lines:
-            print(str(line))
+	if (print_scn):
+		print("\n====== SCANNER OUTPUT ======")
+	for line in code_lines:
+		print(str(line))
 
-    code_lines = run_parser(code_lines)
+	code_lines = run_parser(code_lines)
 	# Command line option to print parser output
-    if (print_prs):
-        print("\n====== PARSER OUTPUT ======")
-        for line in code_lines:
-            print(str(line))
+	if (print_prs):
+		print("\n====== PARSER OUTPUT ======")
+	for line in code_lines:
+		print(str(line))
 
-    return code_lines
+	return code_lines
 
 ### Scanner/tokenizer for compiler frontend
 def run_scanner(code_lines):
@@ -161,19 +164,6 @@ def run_scanner(code_lines):
 ### Parser for compiler frontend
 def run_parser(code_lines):
 	output = ""
-	grammar = {}
-	for line in grammar_file:
-		line = line.replace("\n", "")
-		tmp_list = line.split("~")
-		values = tmp_list[1]
-		values = ' '.join(values.split())
-		values = values.split("|")
-		for i in range(0, len(values)):
-			values[i] = ' '.join(values[i].split())
-			values[i] = values[i].split(" ")
-			values[i] = [j for j in values[i] if j]
-		grammar[tmp_list[0]] = values
-		# print(values)
 
 	# tree = Tree()
 	# tree.create_node("Harry", "harry")  # root node
@@ -187,3 +177,20 @@ def run_parser(code_lines):
 	#Parses tokens using language grammar
 	# TO DO: Implement parser
 	return output
+
+#parses a input grammar file and outputs
+#a properly formated dictionary
+def parse_grammar(grammar_file):
+	grammar = {}
+	for line in grammar_file:
+		line = line.replace("\n", "")
+		tmp_list = line.split("~")
+		values = tmp_list[1]
+		values = ' '.join(values.split())
+		values = values.split("|")
+		for i in range(0, len(values)):
+			values[i] = ' '.join(values[i].split())
+			values[i] = values[i].split(" ")
+			values[i] = [j for j in values[i] if j]
+		grammar[tmp_list[0]] = values
+	return(grammar)
