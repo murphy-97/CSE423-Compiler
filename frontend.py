@@ -5,7 +5,7 @@
 import re
 from treelib import Node, Tree
 # Import project modules
-import errors
+# import errors
 
 
 ### Main method for frontend module
@@ -13,16 +13,14 @@ def run_frontend(code_lines, print_scn, print_prs):
 	"""Takes a list of code lines and returns a list of processed code lines"""
 	tokens = run_scanner(code_lines)
 
-	grammar = parse_grammar(open('grammar.txt', "r"))
-	ast = run_parser(tokens, grammar)
-
 	# Command line option to print scanner output
 	if (print_scn):
 		print("\n====== SCANNER OUTPUT ======")
 	for line in code_lines:
 		print(str(line))
 
-	code_lines = run_parser(code_lines)
+	grammar = parse_grammar(open('grammar.txt', "r"))
+	ast = run_parser(tokens, grammar)
 	# Command line option to print parser output
 	if (print_prs):
 		print("\n====== PARSER OUTPUT ======")
@@ -165,14 +163,14 @@ def run_scanner(code_lines):
 def run_parser(tokens, grammar):
 	output = ""
 
-	# tree = Tree()
-	# tree.create_node("Harry", "harry")  # root node
-	# tree.create_node("Jane", "jane", parent="harry")
-	# tree.create_node("Bill", "bill", parent="harry")
-	# tree.create_node("Diane", "diane", parent="jane")
-	# tree.create_node("Mary", "mary", parent="diane")
-	# tree.create_node("Mark", "mark", parent="jane")
-	# tree.show()
+	tree = Tree()
+	tree.create_node("Harry", "harry")  # root node
+	tree.create_node("Jane", "jane", parent="harry")
+	tree.create_node("Bill", "bill", parent="harry")
+	tree.create_node("Diane", "diane", parent="jane")
+	tree.create_node("Mary", "mary", parent="diane")
+	tree.create_node("Mark", "mark", parent="jane")
+	tree.show()
 
 	#Parses tokens using language grammar
 	# TO DO: Implement parser
@@ -194,3 +192,8 @@ def parse_grammar(grammar_file):
 			values[i] = [j for j in values[i] if j]
 		grammar[tmp_list[0]] = values
 	return(grammar)
+
+
+if __name__ == '__main__':
+	input_file = open('hello.c', "r")
+	run_frontend(input_file, 0, 0)
