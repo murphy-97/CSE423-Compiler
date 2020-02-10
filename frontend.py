@@ -59,6 +59,11 @@ def run_scanner(code_lines):
 	for string in strings_array:
 		entire_doc = entire_doc.replace(string, "$string$", 1)
 
+	# find, store, and replace all characters
+	chars_array = re.findall(r"'.*?'", entire_doc)
+	for char in chars_array:
+		entire_doc = entire_doc.replace(char, "$char$", 1)
+
 	entire_doc = entire_doc.replace("++", "$plus$")
 	entire_doc = entire_doc.replace("--", "$minus$")
 	entire_doc = entire_doc.replace("+=", "$plus_equals$")
@@ -160,6 +165,9 @@ def run_scanner(code_lines):
 		elif (token == "$string$"):
 			token = strings_array.pop(0)
 			tokens_descriptive.append([token, "STRINGCONST", line_counter])
+		elif (token == "$char$"):
+			token = chars_array.pop(0)
+			tokens_descriptive.append([token, "CHARCONST", line_counter])
 		else:
 			raise Exception(errors.ERR_BAD_TOKEN + " '" + token + "' on line " + str(line_counter))
 			# tokens_descriptive.append([token, "UNRECOGNIZED"])
