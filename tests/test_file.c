@@ -1,12 +1,4 @@
-/*
-    Basic hello world file for compiler testing.
-    Can be expanded as compiler becomes more advanced.
-*/
-
-#include <stdio.h>
-
-int main()
+int main(void)
 {
-    printf("Hello, World!");
-    return 0;
+    return 1;
 }
