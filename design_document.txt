@@ -16,6 +16,22 @@ Usage: python compiler.py -i 'input-file'
   --p-scn  Prints scanner output
   --p-prs  Prints parser output
 
+Required Modules:
+  sys
+  getopt
+  re
+  treelib
+  collections
+
+Project Modules:
+  compiler
+  frontend
+  optimizer
+  backend
+  errors
+
+=== COMPILER DESIGN ============================================================
+
 SCANNER:
   The scanner takes a file object as a parameter and returns a list of token
   descriptors. Each token descriptor is a list of length 3 containing the token,
