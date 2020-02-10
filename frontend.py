@@ -18,8 +18,8 @@ def run_frontend(code_lines, print_scn, print_prs):
 	# Command line option to print scanner output
 	if (print_scn):
 		print("\n====== SCANNER OUTPUT ======")
-	for line in code_lines:
-		print(str(line))
+		for token in tokens:
+			print(str(token))
 
 	grammar = parse_grammar(open('grammar.txt', "r"))
 	ast = run_parser(tokens, grammar)
@@ -148,7 +148,6 @@ def run_scanner(code_lines):
 		]):
 			tokens_descriptive.append([token, "typeSpecifier"])
 		elif (re.match(r"([a-zA-Z0-9\s_\\.\-\(\):])+(.h)$", token)):
-			# For some reason this isn't catching anything....
 			tokens_descriptive.append([token, "fileImport"])
 		elif (re.match(r"^[a-zA-z_][a-zA-Z0-9_]*$", token)):
 			tokens_descriptive.append([token, "ID"])
