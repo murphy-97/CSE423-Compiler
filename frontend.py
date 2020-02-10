@@ -74,6 +74,10 @@ def run_scanner(code_lines):
 	for value in replace_space_array:
 		entire_doc = entire_doc.replace(value, " "+value+" ")
 
+	# prepare for line counts for error reporting
+	entire_doc = entire_doc.replace("\n", " $newline$ ")
+	line_counter = 1
+
 	#remove extra characters
 	entire_doc = ' '.join(entire_doc.split())
 	#add back in double operands
@@ -114,24 +118,26 @@ def run_scanner(code_lines):
 				# Token is neither an int nor a float
 				pass
 				
-		if (token in ["+", "-"]): #
-			tokens_descriptive.append([token, "sumop"])
+		if (token in ["$newline$"]):
+			line_counter += 1
+		elif (token in ["+", "-"]): #
+			tokens_descriptive.append([token, "sumop", line_counter])
 		elif (token in ["&&"]): #
-			tokens_descriptive.append([token, "&&"])
+			tokens_descriptive.append([token, "&&", line_counter])
 		elif (token in ["||"]): #
-			tokens_descriptive.append([token, "||"])
+			tokens_descriptive.append([token, "||", line_counter])
 		elif (token in ["!"]): #
-			tokens_descriptive.append([token, "!"])
+			tokens_descriptive.append([token, "!", line_counter])
 		elif (token in ["-", "*", "?"]): #
-			tokens_descriptive.append([token, "unaryop"])
+			tokens_descriptive.append([token, "unaryop", line_counter])
 		elif (token in ["*", "/", "%"]): #
-			tokens_descriptive.append([token, "mulop"])
+			tokens_descriptive.append([token, "mulop", line_counter])
 		elif (token in ["<=", "<", ">", ">=", "==", "!="]): #
-			tokens_descriptive.append([token, "relop"])
+			tokens_descriptive.append([token, "relop", line_counter])
 		elif (token in ["return"]): #
-			tokens_descriptive.append([token, "return"])
+			tokens_descriptive.append([token, "return", line_counter])
 		elif (token in single_tokens): #
-			tokens_descriptive.append([token, token])
+			tokens_descriptive.append([token, token, line_counter])
 
 		elif (token in [
 			"auto", "break", "else", "long", "switch", "case", "register",
@@ -139,23 +145,23 @@ def run_scanner(code_lines):
 			"do", "if", "static", "while", "default", "goto", "sizeof",
 			"volatile", "const", "unsigned"
 		]):
-			tokens_descriptive.append([token, "keyword"])
+			tokens_descriptive.append([token, "keyword", line_counter])
 		elif (token in ["#include", "#define"]):
-			tokens_descriptive.append([token, "preDirective"])
+			tokens_descriptive.append([token, "preDirective", line_counter])
 		elif (token in [
 			"double", "int", "struct", "long", "enum", "char", "void", "float",
 			"float", "short"
 		]):
 			tokens_descriptive.append([token, "typeSpecifier"])
 		elif (re.match(r"([a-zA-Z0-9\s_\\.\-\(\):])+(.h)$", token)):
-			tokens_descriptive.append([token, "fileImport"])
+			tokens_descriptive.append([token, "fileImport", line_counter])
 		elif (re.match(r"^[a-zA-z_][a-zA-Z0-9_]*$", token)):
-			tokens_descriptive.append([token, "ID"])
+			tokens_descriptive.append([token, "ID", line_counter])
 		elif (token == "$string$"):
 			token = strings_array.pop(0)
-			tokens_descriptive.append([token, "STRINGCONST"])
+			tokens_descriptive.append([token, "STRINGCONST", line_counter])
 		else:
-			raise Exception(errors.ERR_BAD_TOKEN + " '" + token + "'")
+			raise Exception(errors.ERR_BAD_TOKEN + " '" + token + "' on line " + str(line_counter))
 			# tokens_descriptive.append([token, "UNRECOGNIZED"])
 
 	# for token in tokens_descriptive:
