@@ -3,8 +3,9 @@
 
 # Import non-project modules
 import re
-from treelib import Node, Tree
 import sys
+sys.path.append('treelib-1.5.5/')
+from treelib import Node, Tree
 from collections import OrderedDict
 # Import project modules
 import errors
