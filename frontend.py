@@ -28,7 +28,7 @@ def run_frontend(code_lines, print_scn, print_prs):
     ast = run_parser(tokens, grammar)
 
     # Command line option to print parser output
-    print_prs = True
+    # print_prs = True
     if (print_prs):
         print("\n====== PARSER OUTPUT ======")
         # for line in code_lines:
@@ -194,7 +194,7 @@ def run_scanner(code_lines):
 
 # Parser for compiler frontend
 def run_parser(tokens, grammar):
-    j = 1
+    j = 0
     found_main = False
     # Getting to the main function
     for k in range(0, len(tokens)):
@@ -215,25 +215,27 @@ def run_parser(tokens, grammar):
 
     tree = Tree()
     # create root node
-    tree.create_node(cur_token, cur_token)  # root node
+    root = Node(cur_token, None, True, tokens[j])
+    tree.add_node(root, None)
+    # tree.root = root  # root node
 
     i = 0
     nxt = 0
     rng = range(j-1, len(tokens))
+    # print(tokens)
     for i in range(j-1, len(tokens)):
         if(nxt > i):
             continue
         list_of_tokens.append(tokens[i])
         result = check_rules(cur_node, list_of_tokens, grammar)
         # print('Result:' + str(result))
-        # printable = []
-        '''for l in list_of_tokens:
-            printable.append(l[0])'''
         # print('CurLine: ' + str(printable))
         if (result[0] > 1):
             continue
         elif (result[0] == 1):
+            # print('Result: ' + str(result))
             # special cases for rules that include blocks and parenthesies?
+
             if (result[1][0] == "funDeclaration"):
                 # k = 0
                 # while (tokens[i] != ")"):
@@ -265,7 +267,32 @@ def run_parser(tokens, grammar):
                     exit(2)
                 # Decrimenting to get the last token in the block
                 nxt = cur
-                cur -= 2
+                cur -= 1
+
+                # Calling the parser on the block
+                # print(tokens[start: cur])
+                level_down = run_parser(tokens[start: cur], grammar)
+
+                # print('Returning to previous level')
+                # Attaching the subtree
+                tree.paste(root.identifier, level_down, False)
+
+                # print('Added nodes to tree')
+            elif(result[1][0] == 'returnStmt'):
+                # print('In return block')
+                cur = i
+                # print(tokens)
+                try:
+                    while(tokens[cur][1] != ';'):
+                        # print('Cur: ' + str(tokens[cur][1]))
+                        cur += 1
+                    start = i + 1
+                except:
+                    print('ERROR: No semi-colon after return statment at ' + i)
+                    exit(3)
+                # Decrimenting to get the last token in the block
+                # print('found semi-colon')
+                nxt = cur + 1
 
                 # Calling the parser on the block
                 # print(tokens[start: cur])
@@ -275,17 +302,13 @@ def run_parser(tokens, grammar):
                 # Attaching the subtree
                 nodes = level_down.all_nodes()
 
-                for n in nodes:
-                    if(not n.is_root()):
-                        tree.create_node(n.tag, None, tree.root, n.data)
-
-                # print('Added nodes to tree')
+                tree.paste(root.identifier, level_down, False)
             else:
                 # Handling the current level
                 # print('Tag: ' + tokens[i][0] + ' Data: ' + tokens[i][1])
                 # print(tree.root)
-                tree.create_node(tokens[i][0], None, tree.root,
-                                 tokens[i])
+                '''tree.create_node(tokens[i][0], None, tree.root,
+                                 tokens[i])'''
                 # print('Created node')
             list_of_tokens = []
 
@@ -297,6 +320,7 @@ def run_parser(tokens, grammar):
     # TO DO: Implement parser
 
     # print(tree)
+    # tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
     return tree
 
 
