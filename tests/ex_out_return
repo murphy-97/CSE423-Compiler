@@ -1,0 +1,21 @@
+i_file = tests/test_file.c
+o_file = tests/test_file.c.ASM
+Scanning
+
+====== SCANNER OUTPUT ======
+['int', 'typeSpecifier']
+['main', 'ID', 1]
+['(', '(', 1]
+['void', 'typeSpecifier']
+[')', ')', 1]
+['{', '{', 2]
+['return', 'return', 3]
+['1', 'NUMCONST']
+[';', ';', 3]
+['}', '}', 4]
+Parsing
+
+====== PARSER OUTPUT ======
+main
+└── return
+    └── 1
