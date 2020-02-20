@@ -32,7 +32,7 @@ def run_frontend(code_lines, print_scn, print_prs):
         print("\n====== PARSER OUTPUT ======")
         ast.show(None, 0, True, None, None, False, 'ascii-ex', None)
 
-    return code_lines
+    return ast
 
 
 # Scanner/tokenizer for compiler frontend
