@@ -28,11 +28,8 @@ def run_frontend(code_lines, print_scn, print_prs):
     ast = run_parser(tokens, grammar)
 
     # Command line option to print parser output
-    # print_prs = True
     if (print_prs):
         print("\n====== PARSER OUTPUT ======")
-        # for line in code_lines:
-        # print(str(line))
         ast.show(None, 0, True, None, None, False, 'ascii-ex', None)
 
     return code_lines
@@ -263,8 +260,7 @@ def run_parser(tokens, grammar):
 
                 # Ensuring that the backets are balanced in the block
                 if(depth != 0):
-                    print('ERROR: Unbalanced brackets starting at ' + i)
-                    exit(2)
+                    raise Exception(errors.ERR_UNB_BRACKETS + " on line " + str(tokens[i][2]))
                 # Decrimenting to get the last token in the block
                 nxt = cur
                 cur -= 1
@@ -287,9 +283,8 @@ def run_parser(tokens, grammar):
                         # print('Cur: ' + str(tokens[cur][1]))
                         cur += 1
                     start = i + 1
-                except:
-                    print('ERROR: No semi-colon after return statment at ' + i)
-                    exit(3)
+                except Exception as e:
+                    raise Exception(errors.ERR_NO_SEMI_RETURN + " on line " + str(tokens[i][2]))
                 # Decrimenting to get the last token in the block
                 # print('found semi-colon')
                 nxt = cur + 1
@@ -314,7 +309,7 @@ def run_parser(tokens, grammar):
 
         elif(result[0] < 1):
             # reject
-            exit(1)
+            raise Exception(errors.ERR_NO_RULE + " on line " + str(tokens[i][2]))
 
     # Parses tokens using language grammar
     # TO DO: Implement parser
