@@ -58,6 +58,7 @@ def run_scanner(code_lines):
     # remove comments
 
     entire_doc = re.sub(re.compile("//.*?\n"), "\n", entire_doc)
+    entire_doc = re.sub(r'//.*?$', "\n", entire_doc)
     entire_doc = re.sub(re.compile("/\*.*?\*/"), "", entire_doc)
 
     # remove the non-allowed character $
