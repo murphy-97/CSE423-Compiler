@@ -55,12 +55,6 @@ def run_scanner(code_lines):
     for line in input:
         entire_doc = entire_doc + line
 
-    # remove comments
-
-    entire_doc = re.sub(re.compile("//.*?\n"), "\n", entire_doc)
-    entire_doc = re.sub(r'//.*?$', "\n", entire_doc)
-    entire_doc = re.sub(re.compile("/\*.*?\*/"), "", entire_doc)
-
     # remove the non-allowed character $
     entire_doc = entire_doc.replace("$", "")
 
@@ -91,9 +85,16 @@ def run_scanner(code_lines):
     for value in replace_space_array:
         entire_doc = entire_doc.replace(value, " "+value+" ")
 
-    # prepare for line counts for error reporting
+    # remove line comments (must be before line break removal)
+    entire_doc = re.sub(r'//.*?\n', "\n", entire_doc)
+
+    # prepare for line counts for error reporting and remove line breaks
     entire_doc = entire_doc.replace("\n", " $newline$ ")
     line_counter = 1
+
+    # remove block comments (must be after line break removal)
+    entire_doc = re.sub(r'//.*?$', "\n", entire_doc)
+    entire_doc = re.sub(r'\/\*.*\*\/', "", entire_doc)
 
     # remove extra characters
     entire_doc = ' '.join(entire_doc.split())
