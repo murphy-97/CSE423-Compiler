@@ -201,20 +201,18 @@ def run_parser(tokens, grammar):
             found_main = True
             break
 
-    if found_main:
+    if found_main:    # print('Cur_token : ' + cur_token)
         j = k
 
     cond_pass = 0
     # print('J: ' + str(j))
-    cur_token = tokens[j][0]
-    # print('Cur_token : ' + cur_token)
     cur_node = "program"
     stack = []
     list_of_tokens = []
 
     tree = Tree()
     # create root node
-    root = Node(cur_token, None, True, tokens[j])
+    root = Node(cur_node, None, True, cur_node)
     tree.add_node(root, None)
     # tree.root = root  # root node
 
@@ -232,7 +230,10 @@ def run_parser(tokens, grammar):
         if (result[0] > 1):
             continue
         elif (result[0] == 1):
-            # print('Result: ' + str(result))
+            cur_token = tokens[i-1][0]
+            leaf = Node(cur_token, None, True, tokens[j])
+            tree.add_node(leaf, root.identifier)
+            print('Result: ' + str(result))
             # special cases for rules that include blocks and parenthesies?
 
             if (result[1][0] == "funDeclaration"):
@@ -270,36 +271,49 @@ def run_parser(tokens, grammar):
                 # Calling the parser on the block
                 # print(tokens[start: cur])
                 level_down = run_parser(tokens[start: cur], grammar)
+                print('trying to add subtree')
+                children = level_down.children(level_down.root)
+                for n in children:
+                    print('Adding subtree')
+                    sub = level_down.remove_subtree(n.identifier)
+                    tree.paste(leaf.identifier, sub, False)
+
+                tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
 
                 # print('Returning to previous level')
                 # Attaching the subtree
-                tree.paste(root.identifier, level_down, False)
+                #tree.paste(leaf.identifier, level_down, False)
 
                 # print('Added nodes to tree')
             elif(result[1][0] == 'returnStmt'):
-                # print('In return block')
+                print('In return block')
                 cur = i
                 # print(tokens)
                 try:
                     while(tokens[cur][1] != ';'):
-                        # print('Cur: ' + str(tokens[cur][1]))
+                        print('Cur: ' + str(tokens[cur][1]))
                         cur += 1
                     start = i + 1
                 except Exception as e:
                     raise Exception(errors.ERR_NO_SEMI_RETURN + " on line " + str(tokens[i][2]))
                 # Decrimenting to get the last token in the block
-                # print('found semi-colon')
+                print('found semi-colon')
                 nxt = cur + 1
 
                 # Calling the parser on the block
-                # print(tokens[start: cur])
+                print(tokens[start: cur])
                 level_down = run_parser(tokens[start: cur], grammar)
 
                 # print('Returning to previous level')
                 # Attaching the subtree
-                nodes = level_down.all_nodes()
+                print('trying to add subtree')
+                children = level_down.children(level_down.root)
+                for n in children:
+                    print('Adding subtree')
+                    sub = level_down.remove_subtree(n.identifier)
+                    tree.paste(leaf.identifier, sub, False)
 
-                tree.paste(root.identifier, level_down, False)
+                tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
             else:
                 # Handling the current level
                 # print('Tag: ' + tokens[i][0] + ' Data: ' + tokens[i][1])
@@ -307,6 +321,7 @@ def run_parser(tokens, grammar):
                 '''tree.create_node(tokens[i][0], None, tree.root,
                                  tokens[i])'''
                 # print('Created node')
+                tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
             list_of_tokens = []
 
         elif(result[0] < 1):
