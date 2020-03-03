@@ -130,6 +130,7 @@ def main():
     llvm_ir = build_llvm(ast_dummy)
 
     # Output result
+    print("=== LLVM IR OUTPUT ===")
     print(llvm_ir)
 
 # Boilerplate for calling main by running this module
