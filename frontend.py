@@ -30,7 +30,7 @@ def run_frontend(code_lines, print_scn, print_prs):
     # Command line option to print parser output
     if (print_prs):
         print("\n====== PARSER OUTPUT ======")
-        ast.show(None, 0, True, None, None, False, 'ascii-ex', None)
+        ast.show(None, 0, True, None, None, False, 'ascii', None)
 
     return ast
 
