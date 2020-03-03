@@ -278,7 +278,7 @@ def run_parser(tokens, grammar):
                     sub = level_down.remove_subtree(n.identifier)
                     tree.paste(leaf.identifier, sub, False)
 
-                tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
+                #tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
 
                 # print('Returning to previous level')
                 # Attaching the subtree
@@ -313,7 +313,7 @@ def run_parser(tokens, grammar):
                     sub = level_down.remove_subtree(n.identifier)
                     tree.paste(leaf.identifier, sub, False)
 
-                tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
+                #tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
             else:
                 # Handling the current level
                 # print('Tag: ' + tokens[i][0] + ' Data: ' + tokens[i][1])
@@ -321,7 +321,7 @@ def run_parser(tokens, grammar):
                 '''tree.create_node(tokens[i][0], None, tree.root,
                                  tokens[i])'''
                 # print('Created node')
-                tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
+                #tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
             list_of_tokens = []
 
         elif(result[0] < 1):
