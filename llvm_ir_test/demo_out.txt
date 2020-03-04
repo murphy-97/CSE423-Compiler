@@ -1,0 +1,24 @@
+=== DUMMY AST ===
+program
+|-- functions
+|   |-- ('add_int', 'int', ('int', 'int'))
+|   +-- ('main', 'int', ('void',))
++-- globals
+
+=== LLVM IR OUTPUT ===
+; ModuleID = "program"
+target triple = "unknown-unknown-unknown"
+target datalayout = ""
+
+define i8 @"add_int"(i8 %".1", i8 %".2") 
+{
+entry:
+  ret void
+}
+
+define i8 @"main"(void %".1") 
+{
+entry:
+  ret void
+}
+
