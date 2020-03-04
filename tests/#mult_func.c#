@@ -1,0 +1,12 @@
+#include <studio.h>
+
+int main(void)
+{
+  return 0;
+}
+
+int func_dec(void)
+{
+  int a;
+  return a;
+}

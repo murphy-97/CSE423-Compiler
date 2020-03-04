@@ -1,0 +1,104 @@
+TranslationUnitDecl 0xc7ae78 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0xc7b710 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0xc7b410 '__int128'
+|-TypedefDecl 0xc7b780 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0xc7b430 'unsigned __int128'
+|-TypedefDecl 0xc7ba88 <<invalid sloc>> <invalid sloc> implicit __NSConstantString 'struct __NSConstantString_tag'
+| `-RecordType 0xc7b860 'struct __NSConstantString_tag'
+|   `-Record 0xc7b7d8 '__NSConstantString_tag'
+|-TypedefDecl 0xc7bb20 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0xc7bae0 'char *'
+|   `-BuiltinType 0xc7af10 'char'
+|-TypedefDecl 0xc7bb90 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list 'char *'
+| `-PointerType 0xc7bae0 'char *'
+|   `-BuiltinType 0xc7af10 'char'
+|-FunctionDecl 0xc7bcb0 <tests/mult_func.c:3:1, line:6:1> line:3:5 main 'int (void)'
+| `-CompoundStmt 0xc7bdf8 <line:4:1, line:6:1>
+|   `-ReturnStmt 0xc7bde8 <line:5:3, col:10>
+|     `-IntegerLiteral 0xc7bdc0 <col:10> 'int' 0
+`-FunctionDecl 0x282d130 <line:8:1, line:12:1> line:8:5 func_dec 'int (int)'
+  |-ParmVarDecl 0x282d060 <col:14, col:18> col:18 input 'int'
+  `-CompoundStmt 0x282d2b8 <line:9:1, line:12:1>
+    |-DeclStmt 0x282d258 <line:10:3, col:8>
+    | `-VarDecl 0x282d1f0 <col:3, col:7> col:7 used a 'int'
+    `-ReturnStmt 0x282d2a8 <line:11:3, col:10>
+      `-ImplicitCastExpr 0x282d290 <col:10> 'int' <LValueToRValue>
+        `-DeclRefExpr 0x282d270 <col:10> 'int' lvalue Var 0x282d1f0 'a' 'int'
+TranslationUnitDecl 0xbeae78 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0xbeb710 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0xbeb410 '__int128'
+|-TypedefDecl 0xbeb780 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0xbeb430 'unsigned __int128'
+|-TypedefDecl 0xbeba88 <<invalid sloc>> <invalid sloc> implicit __NSConstantString 'struct __NSConstantString_tag'
+| `-RecordType 0xbeb860 'struct __NSConstantString_tag'
+|   `-Record 0xbeb7d8 '__NSConstantString_tag'
+|-TypedefDecl 0xbebb20 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0xbebae0 'char *'
+|   `-BuiltinType 0xbeaf10 'char'
+|-TypedefDecl 0xbebb90 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list 'char *'
+| `-PointerType 0xbebae0 'char *'
+|   `-BuiltinType 0xbeaf10 'char'
+|-FunctionDecl 0xbebcb0 <tests/mult_func.c:3:1, line:6:1> line:3:5 main 'int (void)'
+| `-CompoundStmt 0xbebdf8 <line:4:1, line:6:1>
+|   `-ReturnStmt 0xbebde8 <line:5:3, col:10>
+|     `-IntegerLiteral 0xbebdc0 <col:10> 'int' 0
+`-FunctionDecl 0x27cd130 <line:8:1, line:12:1> line:8:5 func_dec 'int (int)'
+  |-ParmVarDecl 0x27cd060 <col:14, col:18> col:18 input 'int'
+  `-CompoundStmt 0x27cd2b8 <line:9:1, line:12:1>
+    |-DeclStmt 0x27cd258 <line:10:3, col:8>
+    | `-VarDecl 0x27cd1f0 <col:3, col:7> col:7 used a 'int'
+    `-ReturnStmt 0x27cd2a8 <line:11:3, col:10>
+      `-ImplicitCastExpr 0x27cd290 <col:10> 'int' <LValueToRValue>
+        `-DeclRefExpr 0x27cd270 <col:10> 'int' lvalue Var 0x27cd1f0 'a' 'int'
+TranslationUnitDecl 0xb6ae78 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0xb6b710 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0xb6b410 '__int128'
+|-TypedefDecl 0xb6b780 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0xb6b430 'unsigned __int128'
+|-TypedefDecl 0xb6ba88 <<invalid sloc>> <invalid sloc> implicit __NSConstantString 'struct __NSConstantString_tag'
+| `-RecordType 0xb6b860 'struct __NSConstantString_tag'
+|   `-Record 0xb6b7d8 '__NSConstantString_tag'
+|-TypedefDecl 0xb6bb20 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0xb6bae0 'char *'
+|   `-BuiltinType 0xb6af10 'char'
+|-TypedefDecl 0xb6bb90 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list 'char *'
+| `-PointerType 0xb6bae0 'char *'
+|   `-BuiltinType 0xb6af10 'char'
+|-FunctionDecl 0xb6bcb0 <tests/mult_func.c:3:1, line:6:1> line:3:5 main 'int (void)'
+| `-CompoundStmt 0xb6bdf8 <line:4:1, line:6:1>
+|   `-ReturnStmt 0xb6bde8 <line:5:3, col:10>
+|     `-IntegerLiteral 0xb6bdc0 <col:10> 'int' 0
+`-FunctionDecl 0x293d130 <line:8:1, line:12:1> line:8:5 func_dec 'int (int)'
+  |-ParmVarDecl 0x293d060 <col:14, col:18> col:18 input 'int'
+  `-CompoundStmt 0x293d2b8 <line:9:1, line:12:1>
+    |-DeclStmt 0x293d258 <line:10:3, col:8>
+    | `-VarDecl 0x293d1f0 <col:3, col:7> col:7 used a 'int'
+    `-ReturnStmt 0x293d2a8 <line:11:3, col:10>
+      `-ImplicitCastExpr 0x293d290 <col:10> 'int' <LValueToRValue>
+        `-DeclRefExpr 0x293d270 <col:10> 'int' lvalue Var 0x293d1f0 'a' 'int'
+TranslationUnitDecl 0xc1ae78 <<invalid sloc>> <invalid sloc>
+|-TypedefDecl 0xc1b710 <<invalid sloc>> <invalid sloc> implicit __int128_t '__int128'
+| `-BuiltinType 0xc1b410 '__int128'
+|-TypedefDecl 0xc1b780 <<invalid sloc>> <invalid sloc> implicit __uint128_t 'unsigned __int128'
+| `-BuiltinType 0xc1b430 'unsigned __int128'
+|-TypedefDecl 0xc1ba88 <<invalid sloc>> <invalid sloc> implicit __NSConstantString 'struct __NSConstantString_tag'
+| `-RecordType 0xc1b860 'struct __NSConstantString_tag'
+|   `-Record 0xc1b7d8 '__NSConstantString_tag'
+|-TypedefDecl 0xc1bb20 <<invalid sloc>> <invalid sloc> implicit __builtin_ms_va_list 'char *'
+| `-PointerType 0xc1bae0 'char *'
+|   `-BuiltinType 0xc1af10 'char'
+|-TypedefDecl 0xc1bb90 <<invalid sloc>> <invalid sloc> implicit __builtin_va_list 'char *'
+| `-PointerType 0xc1bae0 'char *'
+|   `-BuiltinType 0xc1af10 'char'
+|-FunctionDecl 0xc1bcb0 <tests/mult_func.c:1:1, line:4:1> line:1:5 main 'int (void)'
+| `-CompoundStmt 0xc1bdf8 <line:2:1, line:4:1>
+|   `-ReturnStmt 0xc1bde8 <line:3:3, col:10>
+|     `-IntegerLiteral 0xc1bdc0 <col:10> 'int' 0
+`-FunctionDecl 0x27cc120 <line:6:1, line:10:1> line:6:5 func_dec 'int (int)'
+  |-ParmVarDecl 0x27cc050 <col:14, col:18> col:18 input 'int'
+  `-CompoundStmt 0x27cc2a8 <line:7:1, line:10:1>
+    |-DeclStmt 0x27cc248 <line:8:3, col:8>
+    | `-VarDecl 0x27cc1e0 <col:3, col:7> col:7 used a 'int'
+    `-ReturnStmt 0x27cc298 <line:9:3, col:10>
+      `-ImplicitCastExpr 0x27cc280 <col:10> 'int' <LValueToRValue>
+        `-DeclRefExpr 0x27cc260 <col:10> 'int' lvalue Var 0x27cc1e0 'a' 'int'
