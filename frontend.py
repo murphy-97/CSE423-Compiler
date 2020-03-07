@@ -191,151 +191,159 @@ def run_scanner(code_lines):
     # 	print(token)
     return tokens_descriptive
 
-
 # Parser for compiler frontend
-def run_parser(tokens, grammar):
-    j = 0
-    found_main = False
-    # Getting to the main function
-    for k in range(0, len(tokens)):
-        if (tokens[k][0] == "main"):
-            found_main = True
-            break
-
-    if found_main:    # print('Cur_token : ' + cur_token)
-        j = k
-
-    cond_pass = 0
-    # print('J: ' + str(j))
-    cur_node = "program"
-    stack = []
-    list_of_tokens = []
-
+def run_parser(tokens, grammar, look_for_brace=False):
     tree = Tree()
     # create root node
-    root = Node(cur_node, None, True, cur_node)
-    tree.add_node(root, None)
-    # tree.root = root  # root node
+    root = Node(tag="body")
+    tree.add_node(root, parent=None)
+    num_tokens_to_skip = 0
+    list_of_tokens = []
 
-    i = 0
-    nxt = 0
-    rng = range(j-1, len(tokens))
-    # print(tokens)
-    for i in range(j-1, len(tokens)):
-        if(nxt > i):
+    for i in range(0, len(tokens)):
+        if (num_tokens_to_skip > 0):
+            num_tokens_to_skip -= 1
             continue
+        if (look_for_brace and token[i] == "}"):
+            break
         list_of_tokens.append(tokens[i])
+
         result = check_rules(cur_node, list_of_tokens, grammar)
-        # print('Result:' + str(result))
-        # print('CurLine: ' + str(printable))
-        if (result[0] > 1):
+        if (result[0] > 1): #matches more than one possible rule
             continue
-        elif (result[0] == 1):
-            cur_token = tokens[i-1][0]
-            leaf = Node(cur_token, None, True, tokens[j])
-            tree.add_node(leaf, root.identifier)
-            print('Result: ' + str(result))
-            # special cases for rules that include blocks and parenthesies?
-
-            if (result[1][0] == "funDeclaration"):
-                # k = 0
-                # while (tokens[i] != ")"):
-
-                # list_of_tokens.pop()
-                # list_of_tokens.pop()
-                # list_of_tokens.pop()
-
-                # print('Parsing Function')
-                # Found new block
-                depth = 1
-                count = 0
-                cur = i + 1
-                while(tokens[cur][1] != '{'):
-                    cur += 1
-                start = cur + 1
-                cur += 1
-                while(depth > 0 and cur < len(tokens)):
-                    if(tokens[cur][0] == '{'):
-                        depth += 1
-                    elif(tokens[cur][0] == '}'):
-                        depth -= 1
-
-                    cur += 1
-
-                # Ensuring that the backets are balanced in the block
-                if(depth != 0):
-                    raise Exception(errors.ERR_UNB_BRACKETS + " on line " + str(tokens[i][2]))
-                # Decrimenting to get the last token in the block
-                nxt = cur
-                cur -= 1
-
-                # Calling the parser on the block
-                # print(tokens[start: cur])
-                level_down = run_parser(tokens[start: cur], grammar)
-                print('trying to add subtree')
-                children = level_down.children(level_down.root)
-                for n in children:
-                    print('Adding subtree')
-                    sub = level_down.remove_subtree(n.identifier)
-                    tree.paste(leaf.identifier, sub, False)
-
-                #tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
-
-                # print('Returning to previous level')
-                # Attaching the subtree
-                #tree.paste(leaf.identifier, level_down, False)
-
-                # print('Added nodes to tree')
-            elif(result[1][0] == 'returnStmt'):
-                print('In return block')
-                cur = i
-                # print(tokens)
-                try:
-                    while(tokens[cur][1] != ';'):
-                        print('Cur: ' + str(tokens[cur][1]))
-                        cur += 1
-                    start = i + 1
-                except Exception as e:
-                    raise Exception(errors.ERR_NO_SEMI_RETURN + " on line " + str(tokens[i][2]))
-                # Decrimenting to get the last token in the block
-                print('found semi-colon')
-                nxt = cur + 1
-
-                # Calling the parser on the block
-                print(tokens[start: cur])
-                level_down = run_parser(tokens[start: cur], grammar)
-
-                # print('Returning to previous level')
-                # Attaching the subtree
-                print('trying to add subtree')
-                children = level_down.children(level_down.root)
-                for n in children:
-                    print('Adding subtree')
-                    sub = level_down.remove_subtree(n.identifier)
-                    tree.paste(leaf.identifier, sub, False)
-
-                #tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
-            else:
-                # Handling the current level
-                # print('Tag: ' + tokens[i][0] + ' Data: ' + tokens[i][1])
-                # print(tree.root)
-                '''tree.create_node(tokens[i][0], None, tree.root,
-                                 tokens[i])'''
-                # print('Created node')
-                #tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
+        elif (result[0] == 1): #matches one possible rule
+            help_fun_tuple = help_func_manager(
+                result,
+                grammar,
+                tokens[i - len(list_of_tokens):-1] #may be off by one
+            )
+            sub_tree = help_fun_tuple[0]
+            num_tokens_to_skip = help_fun_tuple[1]
+            #may or may not need to subtract one from num_tokes_to_skip
+            print("Hannah: add the sub_tree here to root as a child")
+            #call helper function
             list_of_tokens = []
+        elif (result[0] == 0): #matches zero rules
+            #This is a error
+            #parser crash
+            print("Hannah: change this to be pythonic please")
+            exit(1)
 
-        elif(result[0] < 1):
-            # reject
-            raise Exception(errors.ERR_NO_RULE + " on line " + str(tokens[i][2]))
-
-    # Parses tokens using language grammar
-    # TO DO: Implement parser
-
-    # print(tree)
-    # tree.show(None, 0, True, None, None, False, 'ascii-ex', None)
     return tree
 
+
+def help_func_manager(result, grammar, tokens):
+    # if (#is preprocessor):
+    #     return (None, #something)
+
+    if (result[1] == "varDeclaration"):
+        return help_func_varDeclaration(grammar, tokens)
+    if (result[1] == "funDeclaration"):
+        return help_func_funDeclaration(grammar, tokens)
+    if (result[1] == "compoundStmt"):
+        return help_func_compoundStmt(grammar, tokens)
+    if (result[1] == "selectionStmt"):
+        return help_func_selectionStmt(grammar, tokens)
+    if (result[1] == "iterationStmt"):
+        return help_func_iterationStmt(grammar, tokens)
+    if (result[1] == "returnstatement"): #do this
+        return help_func_return(grammar, tokens)
+
+int main(void) {
+    int a = 0;
+}
+
+print("Go back through and fix all tokens to actually refer to the correct index like tokens[0][1]")
+help_func_return(grammar, tokens):
+    tree = Tree()
+    return_node = Node(tag=tokens[0])
+    #add node help_func_expression()
+    return tree
+
+def help_func_expression():
+    pass
+
+def help_func_funDeclaration(grammar, tokens):
+    #first token is return type
+    #the next token is the name
+    #the third token is the (
+    #sometime after that should be a 
+    #)
+    assert(len(tokens) >= 6)
+
+    tree = Tree()
+
+    # organization nodes
+    return_node = Node(tag="return_type")
+    params_node = Node(tag="params")
+
+    # create root node
+    func_root = Node(tag="func:"+tokens[1])
+    return_type = Node(tag=tokens[0])
+
+    # Assemble basic subtree
+    tree.add_node(func_root, parent=None)
+    tree.add_node(return_node, parent=func_root)
+    tree.add_node(params_node, parent=func_root)
+    tree.add_node(body_node, parent=func_root)
+
+    tree.add_node(return_type, parent=return_node)
+
+    # Create and add params nodes
+    params = []
+    for i in range (3, len(tokens), 3):
+        if (tokens[i] == ")"):
+            break
+        else:
+            try:
+                params.append((tokens[i], tokens[i+1]))
+                # i+0 = type
+                # i+1 = name
+                # i+3 = comma if it exists
+            except:
+                print("HANNAH: messed up parameter in func dec")
+
+    for param in params:
+        type_node = Node(tag=param[0])
+        name_node = Node(tag=param[1])
+
+        tree.add_node(type_node, parent=params_node)
+        tree.add_node(name_node, parent=type_node)
+        #check grammar rules
+
+    # Create and add body 
+    body_tree = run_parser_no_brace(grammar, tokens[4 + (3*(len(params)))], look_for_brace=True) #may be off by one
+    print("HANNAH: GLUE THESE TREES TOGETHER")
+
+    return tree
+
+def help_func_block(grammar, tokens):
+    for i in range(0, len(tokens)):
+        if (num_tokens_to_skip > 0):
+            num_tokens_to_skip -= 1
+            continue
+        list_of_tokens.append(tokens[i])
+
+        result = check_rules(cur_node, list_of_tokens, grammar)
+        if (result[0] > 1): #matches more than one possible rule
+            continue
+        elif (result[0] == 1): #matches one possible rule
+            help_fun_tuple = help_func_manager(
+                result,
+                grammar,
+                tokens[i - len(list_of_tokens):-1] #may be off by one
+            )
+            sub_tree = help_fun_tuple[0]
+            num_tokens_to_skip = help_fun_tuple[1]
+            #may or may not need to subtract one from num_tokes_to_skip
+            print("Hannah: add the sub_tree here to root as a child")
+            #call helper function
+            list_of_tokens = []
+        elif (result[0] == 0): #matches zero rules
+            #This is a error
+            #parser crash
+            print("Hannah: change this to be pythonic please")
+            exit(1)
 
 # checks if the current token should result in:
 # rejection, (0 matches)
