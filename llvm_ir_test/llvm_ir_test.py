@@ -111,6 +111,16 @@ def main():
     ast_dummy.add_node(
         Node(
             tag=("add_int", "int", ("int", "int",))
+            # add_int
+            # |-- return type
+            # |   +-- int
+            # |-- params
+            # |   |-- int
+            # |   |   +-- a
+            # |   +-- int
+            # |       |-- b
+            # +-- body
+            #     |-- declaration
         ),
         parent=ast_func
     )
