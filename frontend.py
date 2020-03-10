@@ -223,11 +223,10 @@ def run_parser(tokens, grammar, look_for_brace=False):
             print("Hannah: add the sub_tree here to root as a child")
             #call helper function
             list_of_tokens = []
-        elif (result[0] == 0): #matches zero rules
-            #This is a error
-            #parser crash
-            print("Hannah: change this to be pythonic please")
-            exit(1)
+        elif (result[0] == 0):
+            #matches zero rules. parser crash
+            raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
+                            "' on line " + str(tokens[i][2]))
 
     return tree
 
@@ -296,12 +295,13 @@ def help_func_funDeclaration(grammar, tokens):
             break
         else:
             try:
-                params.append((tokens[i], tokens[i+1]))
+                params.append((tokens[i][0], tokens[i+1][0]))
                 # i+0 = type
                 # i+1 = name
                 # i+3 = comma if it exists
             except:
-                print("HANNAH: messed up parameter in func dec")
+                raise Exception(errors.ERR_BAD_FUNC_PAR + " '" + tokens[i][0] +
+                                "' on line " + str(tokens[i][2]))
 
     for param in params:
         type_node = Node(tag=param[0])
@@ -339,11 +339,10 @@ def help_func_block(grammar, tokens):
             print("Hannah: add the sub_tree here to root as a child")
             #call helper function
             list_of_tokens = []
-        elif (result[0] == 0): #matches zero rules
-            #This is a error
-            #parser crash
-            print("Hannah: change this to be pythonic please")
-            exit(1)
+        elif (result[0] == 0):
+            #matches zero rules. parser crash
+            raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
+                            "' on line " + str(tokens[i][2]))
 
 # checks if the current token should result in:
 # rejection, (0 matches)
