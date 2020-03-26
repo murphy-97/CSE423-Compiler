@@ -248,12 +248,8 @@ def help_func_manager(result, grammar, tokens):
     if (result[1] == "returnstatement"): #do this
         return help_func_return(grammar, tokens)
 
-int main(void) {
-    int a = 0;
-}
-
 print("Go back through and fix all tokens to actually refer to the correct index like tokens[0][1]")
-help_func_return(grammar, tokens):
+def help_func_return(grammar, tokens):
     tree = Tree()
     return_node = Node(tag=tokens[0])
     #add node help_func_expression()
