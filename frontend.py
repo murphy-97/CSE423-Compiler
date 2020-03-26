@@ -220,7 +220,8 @@ def run_parser(tokens, grammar, look_for_brace=False):
             sub_tree = help_fun_tuple[0]
             num_tokens_to_skip = help_fun_tuple[1]
             #may or may not need to subtract one from num_tokes_to_skip
-            print("Hannah: add the sub_tree here to root as a child")
+            #print("Hannah: add the sub_tree here to root as a child")
+            tree.paste(root.identifier, sub_tree)
             #call helper function
             list_of_tokens = []
         elif (result[0] == 0):
@@ -271,6 +272,7 @@ def help_func_funDeclaration(grammar, tokens):
     # organization nodes
     return_node = Node(tag="return_type")
     params_node = Node(tag="params")
+    body_node = Node(tag="func_body")
 
     # create root node
     func_root = Node(tag="func:"+tokens[1])
@@ -309,11 +311,18 @@ def help_func_funDeclaration(grammar, tokens):
 
     # Create and add body 
     body_tree = run_parser_no_brace(grammar, tokens[4 + (3*(len(params)))], look_for_brace=True) #may be off by one
-    print("HANNAH: GLUE THESE TREES TOGETHER")
+    #print("HANNAH: GLUE THESE TREES TOGETHER")
+    tree.paste(body_node.identifier, body_tree)
 
     return tree
 
 def help_func_block(grammar, tokens):
+
+    print("FUNCTION TO BE REVISED. SEE COMMENTS - help_func_block(), frontend.py")
+    # How does the subtree for this block get added to the parse tree?
+    # Parse tree could be added to the passed parameters, or
+    # Subtree could be returned as function result
+
     for i in range(0, len(tokens)):
         if (num_tokens_to_skip > 0):
             num_tokens_to_skip -= 1
@@ -333,6 +342,7 @@ def help_func_block(grammar, tokens):
             num_tokens_to_skip = help_fun_tuple[1]
             #may or may not need to subtract one from num_tokes_to_skip
             print("Hannah: add the sub_tree here to root as a child")
+            tree.paste(root.identifier, sub_tree)
             #call helper function
             list_of_tokens = []
         elif (result[0] == 0):
