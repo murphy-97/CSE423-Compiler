@@ -249,6 +249,18 @@ def help_func_manager(result, grammar, tokens):
     if (result[1] == "returnstatement"): #do this
         return help_func_return(grammar, tokens)
 
+def help_func_varDeclaration(grammar, tokens):
+    pass
+
+def help_func_compoundStmt(grammar, tokens):
+    pass
+
+def help_func_selectionStmt(grammar, tokens):
+    pass
+
+def help_func_iterationStmt(grammar, tokens):
+    pass
+
 print("Go back through and fix all tokens to actually refer to the correct index like tokens[0][1]")
 def help_func_return(grammar, tokens):
     tree = Tree()
@@ -310,7 +322,7 @@ def help_func_funDeclaration(grammar, tokens):
         #check grammar rules
 
     # Create and add body 
-    body_tree = run_parser_no_brace(grammar, tokens[4 + (3*(len(params)))], look_for_brace=True) #may be off by one
+    body_tree = run_parser(grammar, tokens[4 + (3*(len(params)))], look_for_brace=False) #may be off by one
     #print("HANNAH: GLUE THESE TREES TOGETHER")
     tree.paste(body_node.identifier, body_tree)
 
