@@ -204,11 +204,11 @@ def run_parser(tokens, grammar, look_for_brace=False):
         if (num_tokens_to_skip > 0):
             num_tokens_to_skip -= 1
             continue
-        if (look_for_brace and token[i] == "}"):
+        if (look_for_brace and tokens[i][0] == "}"):
             break
-        list_of_tokens.append(tokens[i])
+        list_of_tokens.append(tokens[i])    # append token and metadata
 
-        result = check_rules(cur_node, list_of_tokens, grammar)
+        result = check_rules(tokens[i][1], list_of_tokens, grammar) # Verify first parameter is correct
         if (result[0] > 1): #matches more than one possible rule
             continue
         elif (result[0] == 1): #matches one possible rule
@@ -248,28 +248,133 @@ def help_func_manager(result, grammar, tokens):
         return help_func_iterationStmt(grammar, tokens)
     if (result[1] == "returnstatement"): #do this
         return help_func_return(grammar, tokens)
+    print("Did not account for case: " + result[1])
 
 def help_func_varDeclaration(grammar, tokens):
-    pass
+    # Called only by the help_func_manager
+    # PLACEHOLDER RETURN STATEMENT
+    return (Tree(), 0)
 
 def help_func_compoundStmt(grammar, tokens):
-    pass
+    # Called only by the help_func_manager
+    # PLACEHOLDER RETURN STATEMENT
+    return (Tree(), 0)
 
 def help_func_selectionStmt(grammar, tokens):
-    pass
+    # Called only by the help_func_manager
+    # PLACEHOLDER RETURN STATEMENT
+    return (Tree(), 0)
 
 def help_func_iterationStmt(grammar, tokens):
-    pass
+    # Called only by the help_func_manager
+    # PLACEHOLDER RETURN STATEMENT
+    return (Tree(), 0)
 
-print("Go back through and fix all tokens to actually refer to the correct index like tokens[0][1]")
+print("Go back through and fix all tokens to actually refer to the correct index like tokens[i][0] or tokens[i][1]")
 def help_func_return(grammar, tokens):
     tree = Tree()
-    return_node = Node(tag=tokens[0])
-    #add node help_func_expression()
-    return tree
+    return_node = Node(tag=tokens[0][1])
+    tree.add_node(return_node, parent=None)
 
-def help_func_expression():
-    pass
+    skip_tokens = 0
+    if (tokens[1][0] != ';') :
+        expr_help_out = help_func_expression(grammar, tokens[1:])
+        tree.paste(return_node.identifier, expr_help_out[0])
+        skip_tokens = expr_help_out[1]
+        
+    return (tree, skip_tokens + 1)
+
+def help_func_expression(grammar, tokens):
+    # Called by help_funcs that are called by the manager
+    assert(
+        (tokens.length >= 1 and tokens[0][0] == ';') or
+        tokens.length >= 2
+    )
+
+    # Find first semi-colon
+    semi_colon_index = -1
+    for i in range(tokens.length):
+        if tokens[i][0] == ';':
+            semi_colon_index = i
+
+    if semi_colon_index < 0:
+        print("TODO: THROW ERROR")
+        sys.exit(1)
+
+    # Find the lowest precadence operator
+    lowest_prec_op = None
+    op_precadence = {
+        "&&":    40,
+        "||":    30,
+        "relop": 20,
+        "mulop": 10,
+        "sumop": 0
+    }
+
+    for token in tokens:
+        if (token[0] == ';'):
+            break
+        elif (token[1] in op_precadence):
+            if (
+                (lowest_prec_op is None) or
+                (op_precadence[token[1]] <= op_precadence[lowest_prec_op[1]])
+            ):
+                lowest_prec_op = token
+
+    if (lowest_prec_op is None):
+        # Check is "expression" is just a single constant
+        if (
+            (
+                tokens[0][1] == "NUMCONST" or 
+                tokens[0][1] == "FLOATCONST" or
+                tokens[0][1] == "CHARCONST" or
+                tokens[0][1] == "STRINGCONST" or
+                tokens[0][1] == "true" or
+                tokens[0][1] == "false" or
+                tokens[0][1] == "ID"
+            ) and
+            (tokens[1][0] == ';')
+        ):
+            # Expression is a constant or named variable
+            tree = Tree()
+            value_node = Node(tag=tokens[0][0])
+            tree.add_node(value_node, parent=None)
+            return (tree, 2)
+        elif (tokens[0][1] == "ID" and tokens[1][1] == "("):
+            print("TO DO: CHECK FOR FUNCTION CALL")
+            # Create node with function name
+            tree = Tree()
+            call_node = Node(tag=tokens[0][0])
+            tree.add_node(call_node, parent=None)
+            token_skip = 3
+
+            # Children of node are function parameters
+            for i in range(2, tokens.length):
+                if (tokens[i][1] == "("):
+                    break
+                else:
+                    token_skip += 1
+                    param_node = Node(tag=tokens[i][0])
+                    tree.add_node(param_node, parent=param_node)
+            return (tree, token_skip)
+        else:
+            print("TODO: THROW ERROR")
+            sys.exit(1)
+
+    # Lowest precadence operator found
+    # Lowest precadence operator is root.
+    tree = Tree()
+    op_node = Node(tag=lowest_prec_op[0])
+    tree.add(op_node, parent=None)
+
+    # Recursive calls to make left and right subtrees
+    expr_l = help_func_expression(grammar, tokens[:tokens.index(lowest_prec_op)])
+    expr_r = help_func_expression(grammar, tokens[tokens.index(lowest_prec_op)+1:])
+
+    tree.paste(op_node.identifier, expr_l[0])
+    tree.paste(op_node.identifier, expr_r[0])
+
+    return (tree, tokens.index(lowest_prec_op) + 1 + expr_r[1])
 
 def help_func_funDeclaration(grammar, tokens):
     #first token is return type
@@ -341,7 +446,7 @@ def help_func_block(grammar, tokens):
             continue
         list_of_tokens.append(tokens[i])
 
-        result = check_rules(cur_node, list_of_tokens, grammar)
+        result = check_rules(tokens[i][1], list_of_tokens, grammar)
         if (result[0] > 1): #matches more than one possible rule
             continue
         elif (result[0] == 1): #matches one possible rule
@@ -353,7 +458,7 @@ def help_func_block(grammar, tokens):
             sub_tree = help_fun_tuple[0]
             num_tokens_to_skip = help_fun_tuple[1]
             #may or may not need to subtract one from num_tokes_to_skip
-            print("Hannah: add the sub_tree here to root as a child")
+            #print("Hannah: add the sub_tree here to root as a child")
             tree.paste(root.identifier, sub_tree)
             #call helper function
             list_of_tokens = []
@@ -366,7 +471,7 @@ def help_func_block(grammar, tokens):
 # rejection, (0 matches)
 # possible acceptance, (>=1 match)
 # accept, (1 match and complete rule)
-def check_rules(cur_node, tokens, grammar):
+def check_rules(node_rule, tokens, grammar):
     # print(tokens)
     # print(grammar["funDeclaration"])
     stack_possible_matches = []
@@ -380,10 +485,10 @@ def check_rules(cur_node, tokens, grammar):
                     stack_possible_matches.append(elem)
                 # print(tokens)
 
-    tmp_rules = grammar[cur_node]
+    tmp_rules = grammar[node_rule]
     for elem in stack_possible_matches:
         # if that rule can appear after cur_node
-        if (is_possible_rule(cur_node, elem, grammar)):
+        if (is_possible_rule(node_rule, elem, grammar)):
             stack_actual_matches.append(elem)
 
     '''if (len(stack_actual_matches) == 1):
@@ -396,9 +501,9 @@ def check_rules(cur_node, tokens, grammar):
 
 
 # checks if the current token is allwed after the previous token
-def is_possible_rule(cur_node, match, grammar):
+def is_possible_rule(node_rule, match, grammar):
     stack = []
-    tmp_rules = grammar[cur_node]
+    tmp_rules = grammar[node_rule]
     for elem in tmp_rules:
         stack.append(elem)
     while (len(stack) != 0):

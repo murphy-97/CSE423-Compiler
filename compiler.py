@@ -9,6 +9,8 @@ import frontend
 import optimizer
 import backend
 import errors
+# Used for debugging
+import traceback
 
 # Debug contstant for debug statements
 DEBUG = True
@@ -108,6 +110,9 @@ def main():
             except Exception as e:
                 print("Failed to compile '{}".format(i_file))
                 print("Error: " + str(e))
+                if (DEBUG):
+                    track = traceback.format_exc()
+                    print(track)
 
     except OSError as e:
         print("OS Error: " + str(e))
