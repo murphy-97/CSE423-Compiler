@@ -323,9 +323,9 @@ def help_func_expression(grammar, tokens):
         if tokens[i][0] == ';':
             semi_colon_index = i
 
-    # Find the lowest precadence operator
+    # Find the lowest precedence operator
     lowest_prec_op = []
-    op_precadence = {
+    op_precedence = {
         "&&":    50,
         "||":    40,
         "relop": 30,
@@ -336,10 +336,10 @@ def help_func_expression(grammar, tokens):
     for token in tokens:
         if (token[0] == ';'):
             break
-        elif (token[1] in op_precadence):
+        elif (token[1] in op_precedence):
             if (
                 (len(lowest_prec_op) == 0) or
-                (op_precadence[token[1]] <= op_precadence[lowest_prec_op[1]])
+                (op_precedence[token[1]] <= op_precedence[lowest_prec_op[1]])
             ):
                 lowest_prec_op = token
 
@@ -382,8 +382,8 @@ def help_func_expression(grammar, tokens):
             print("Tokens:", tokens)
             sys.exit(1)
 
-    # Lowest precadence operator found
-    # Lowest precadence operator is root.
+    # Lowest precedence operator found
+    # Lowest precedence operator is root.
     tree = Tree()
     op_node = Node(tag=lowest_prec_op[0])
     tree.add_node(op_node, parent=None)
