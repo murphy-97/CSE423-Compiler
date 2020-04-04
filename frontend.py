@@ -31,7 +31,7 @@ def run_frontend(code_lines, print_scn, print_prs):
     # Command line option to print parser output
     if (print_prs):
         print("\n====== PARSER OUTPUT ======")
-        ast.show(None, 0, True, None, None, False, 'ascii', None)
+        ast.show(key=lambda x: x.identifier, line_type='ascii')
 
     return ast
 
@@ -189,6 +189,13 @@ def run_scanner(code_lines):
 
     # for token in tokens_descriptive:
     # 	print(token)
+
+    # Assign unique token IDs so no two tokens are identical
+    token_id = 0
+    for token in tokens_descriptive:
+        token.append(token_id)
+        token_id += 1
+
     return tokens_descriptive
 
 # Parser for compiler frontend
@@ -222,7 +229,8 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
             #may or may not need to subtract one from num_tokes_to_skip
             #print("Hannah: add the sub_tree here to root as a child")
             tree.paste(root.identifier, sub_tree)
-            tree.show(None, 0, True, None, None, False, 'ascii', None)
+
+            tree.show(key=lambda x: x.identifier, line_type='ascii')
             #call helper function
             list_of_tokens = []
         elif (result[0] == 0):
@@ -255,7 +263,9 @@ def help_func_manager(result, grammar, tokens):
         return help_func_iterationStmt(grammar, tokens)
     if (result[1][0] == "returnStmt"):
         return help_func_return(grammar, tokens)
+    # ERROR CASE
     print("Did not account for case: " + result[1][0])
+    print("Tokens:", tokens)
 
 def help_func_varDeclaration(grammar, tokens):
     # Called only by the help_func_manager
@@ -302,10 +312,10 @@ def help_func_return(grammar, tokens):
 
 def help_func_expression(grammar, tokens):
     # Called by help_funcs that are called by the manager
-    assert(
-        (len(tokens) >= 1 and tokens[0][0] == ';') or
-        len(tokens) >= 2
-    )
+    #assert(
+    #    (len(tokens) >= 1 and tokens[0][0] == ';') or
+    #    len(tokens) >= 2
+    #)
 
     # Find first semi-colon
     semi_colon_index = -1
@@ -313,18 +323,14 @@ def help_func_expression(grammar, tokens):
         if tokens[i][0] == ';':
             semi_colon_index = i
 
-    if semi_colon_index < 0:
-        print("TODO: THROW ERROR")
-        sys.exit(1)
-
     # Find the lowest precadence operator
     lowest_prec_op = []
     op_precadence = {
-        "&&":    40,
-        "||":    30,
-        "relop": 20,
-        "mulop": 10,
-        "sumop": 0
+        "&&":    50,
+        "||":    40,
+        "relop": 30,
+        "mulop": 20,
+        "sumop": 10
     }
 
     for token in tokens:
@@ -373,22 +379,32 @@ def help_func_expression(grammar, tokens):
             return [tree, 1]
         else:
             print("TODO: THROW ERROR")
+            print("Tokens:", tokens)
             sys.exit(1)
 
     # Lowest precadence operator found
     # Lowest precadence operator is root.
     tree = Tree()
     op_node = Node(tag=lowest_prec_op[0])
-    tree.add(op_node, parent=None)
+    tree.add_node(op_node, parent=None)
 
     # Recursive calls to make left and right subtrees
-    expr_l = help_func_expression(grammar, tokens[:tokens.index(lowest_prec_op)])
-    expr_r = help_func_expression(grammar, tokens[tokens.index(lowest_prec_op)+1:])
+    tokens_skip = 1
 
-    tree.paste(op_node.identifier, expr_l[0])
-    tree.paste(op_node.identifier, expr_r[0])
+    tokens_l = tokens[:tokens.index(lowest_prec_op)]
+    tokens_r = tokens[tokens.index(lowest_prec_op)+1:]
 
-    return [tree, tokens.index(lowest_prec_op) + 1 + expr_r[1]]
+    if (len(tokens_l) > 0):
+        expr_l = help_func_expression(grammar, tokens_l)
+        tree.paste(op_node.identifier, expr_l[0])
+        tokens_skip += expr_l[1]
+
+    if (len(tokens_r) > 0):
+        expr_r = help_func_expression(grammar, tokens_r)
+        tree.paste(op_node.identifier, expr_r[0])
+        tokens_skip += expr_r[1]
+
+    return [tree, tokens_skip]
 
 def help_func_funDeclaration(grammar, tokens):
     #first token is return type
@@ -396,7 +412,6 @@ def help_func_funDeclaration(grammar, tokens):
     #the third token is the (
     #sometime after that should be a 
     #)
-    print(tokens)
     assert(len(tokens) >= 4)
 
     tree = Tree()
@@ -452,18 +467,18 @@ def help_func_funDeclaration(grammar, tokens):
     skip_tokens = 0
     if (var_case % 3 == 0):
         # Empty parameters
-        body_tokens = tokens[4:]
-        skip_tokens = 4
-        pass
-    elif (var_case % 3 == 1):
-        # Void parameter
         body_tokens = tokens[5:]
         skip_tokens = 5
         pass
+    elif (var_case % 3 == 1):
+        # Void parameter
+        body_tokens = tokens[6:]
+        skip_tokens = 6
+        pass
     elif (var_case % 3 == 2):
         # Has paremeters
-        body_tokens = tokens[3 + (3*(len(params))):]
-        skip_tokens = 3 + (3*(len(params)))
+        body_tokens = tokens[4 + (3*(len(params))):]
+        skip_tokens = 4 + (3*(len(params)))
         pass
 
     parser_out = run_parser(body_tokens, grammar, look_for_brace=True, root_name="func_body") #may be off by one
