@@ -124,14 +124,14 @@ def run_scanner(code_lines):
         try:
             # Token is an int
             int(token)
-            tokens_descriptive.append([token, "NUMCONST"])
+            tokens_descriptive.append([token, "NUMCONST", line_counter])
             continue
         except:
             # Token is not an int
             try:
                 # Token is a float
                 float(token)
-                tokens_descriptive.append([token, "FLOATCONST"])
+                tokens_descriptive.append([token, "FLOATCONST", line_counter])
                 continue
             except:
                 # Token is neither an int nor a float
@@ -171,7 +171,7 @@ def run_scanner(code_lines):
             "double", "int", "struct", "long", "enum", "char", "void", "float",
             "float", "short"
         ]):
-            tokens_descriptive.append([token, "typeSpecifier"])
+            tokens_descriptive.append([token, "typeSpecifier", line_counter])
         elif (re.match(r"([a-zA-Z0-9\s_\\.\-\(\):])+(.h)$", token)):
             tokens_descriptive.append([token, "fileImport", line_counter])
         elif (re.match(r"^[a-zA-z_][a-zA-Z0-9_]*$", token)):
@@ -192,7 +192,7 @@ def run_scanner(code_lines):
     return tokens_descriptive
 
 # Parser for compiler frontend
-def run_parser(tokens, grammar, look_for_brace=False):
+def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
     tree = Tree()
     # create root node
     root = Node(tag="body")
@@ -208,20 +208,21 @@ def run_parser(tokens, grammar, look_for_brace=False):
             break
         list_of_tokens.append(tokens[i])    # append token and metadata
 
-        result = check_rules(tokens[i][1], list_of_tokens, grammar) # Verify first parameter is correct
+        result = check_rules("program", list_of_tokens, grammar) # Verify first parameter is correct
         if (result[0] > 1): #matches more than one possible rule
             continue
         elif (result[0] == 1): #matches one possible rule
             help_fun_tuple = help_func_manager(
                 result,
                 grammar,
-                tokens[i - len(list_of_tokens):-1] #may be off by one
+                tokens[i - len(list_of_tokens) + 1:] #may be off by one
             )
             sub_tree = help_fun_tuple[0]
             num_tokens_to_skip = help_fun_tuple[1]
             #may or may not need to subtract one from num_tokes_to_skip
             #print("Hannah: add the sub_tree here to root as a child")
             tree.paste(root.identifier, sub_tree)
+            tree.show(None, 0, True, None, None, False, 'ascii', None)
             #call helper function
             list_of_tokens = []
         elif (result[0] == 0):
@@ -229,46 +230,55 @@ def run_parser(tokens, grammar, look_for_brace=False):
             raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
                             "' on line " + str(tokens[i][2]))
 
-    return tree
+    return [tree, 0]
 
 
 def help_func_manager(result, grammar, tokens):
     # if (#is preprocessor):
     #     return (None, #something)
 
-    if (result[1] == "varDeclaration"):
+    if (result[1][0] == "varDeclaration"):
         return help_func_varDeclaration(grammar, tokens)
-    if (result[1] == "funDeclaration"):
+    if (result[1][0] == "funDeclaration"):
         return help_func_funDeclaration(grammar, tokens)
-    if (result[1] == "compoundStmt"):
+    if (result[1][0] == "compoundStmt"):
         return help_func_compoundStmt(grammar, tokens)
-    if (result[1] == "selectionStmt"):
+    if (result[1][0] == "selectionStmt"):
         return help_func_selectionStmt(grammar, tokens)
-    if (result[1] == "iterationStmt"):
+    if (result[1][0] == "iterationStmt"):
         return help_func_iterationStmt(grammar, tokens)
-    if (result[1] == "returnstatement"): #do this
+    if (result[1][0] == "returnStmt"):
         return help_func_return(grammar, tokens)
-    print("Did not account for case: " + result[1])
+    print("Did not account for case: " + result[1][0])
 
 def help_func_varDeclaration(grammar, tokens):
     # Called only by the help_func_manager
     # PLACEHOLDER RETURN STATEMENT
-    return (Tree(), 0)
+    tree = Tree()
+    tree.add_node(Node(tag="Placeholder Var Dec"), parent=None)
+    return [tree, 0]
 
 def help_func_compoundStmt(grammar, tokens):
     # Called only by the help_func_manager
     # PLACEHOLDER RETURN STATEMENT
-    return (Tree(), 0)
+    print("Compound:", tokens)
+    tree = Tree()
+    tree.add_node(Node(tag="Placeholder Compound"), parent=None)
+    return [tree, 0]
 
 def help_func_selectionStmt(grammar, tokens):
     # Called only by the help_func_manager
     # PLACEHOLDER RETURN STATEMENT
-    return (Tree(), 0)
+    tree = Tree()
+    tree.add_node(Node(tag="Placeholder Selection"), parent=None)
+    return [tree, 0]
 
 def help_func_iterationStmt(grammar, tokens):
     # Called only by the help_func_manager
     # PLACEHOLDER RETURN STATEMENT
-    return (Tree(), 0)
+    tree = Tree()
+    tree.add_node(Node(tag="Placeholder Iterationt"), parent=None)
+    return [tree, 0]
 
 print("Go back through and fix all tokens to actually refer to the correct index like tokens[i][0] or tokens[i][1]")
 def help_func_return(grammar, tokens):
@@ -282,18 +292,18 @@ def help_func_return(grammar, tokens):
         tree.paste(return_node.identifier, expr_help_out[0])
         skip_tokens = expr_help_out[1]
         
-    return (tree, skip_tokens + 1)
+    return [tree, skip_tokens + 2]
 
 def help_func_expression(grammar, tokens):
     # Called by help_funcs that are called by the manager
     assert(
-        (tokens.length >= 1 and tokens[0][0] == ';') or
-        tokens.length >= 2
+        (len(tokens) >= 1 and tokens[0][0] == ';') or
+        len(tokens) >= 2
     )
 
     # Find first semi-colon
     semi_colon_index = -1
-    for i in range(tokens.length):
+    for i in range(len(tokens)):
         if tokens[i][0] == ';':
             semi_colon_index = i
 
@@ -302,7 +312,7 @@ def help_func_expression(grammar, tokens):
         sys.exit(1)
 
     # Find the lowest precadence operator
-    lowest_prec_op = None
+    lowest_prec_op = []
     op_precadence = {
         "&&":    40,
         "||":    30,
@@ -316,32 +326,14 @@ def help_func_expression(grammar, tokens):
             break
         elif (token[1] in op_precadence):
             if (
-                (lowest_prec_op is None) or
+                (len(lowest_prec_op) == 0) or
                 (op_precadence[token[1]] <= op_precadence[lowest_prec_op[1]])
             ):
                 lowest_prec_op = token
 
-    if (lowest_prec_op is None):
-        # Check is "expression" is just a single constant
-        if (
-            (
-                tokens[0][1] == "NUMCONST" or 
-                tokens[0][1] == "FLOATCONST" or
-                tokens[0][1] == "CHARCONST" or
-                tokens[0][1] == "STRINGCONST" or
-                tokens[0][1] == "true" or
-                tokens[0][1] == "false" or
-                tokens[0][1] == "ID"
-            ) and
-            (tokens[1][0] == ';')
-        ):
-            # Expression is a constant or named variable
-            tree = Tree()
-            value_node = Node(tag=tokens[0][0])
-            tree.add_node(value_node, parent=None)
-            return (tree, 2)
-        elif (tokens[0][1] == "ID" and tokens[1][1] == "("):
-            print("TO DO: CHECK FOR FUNCTION CALL")
+    if (len(lowest_prec_op) == 0):
+        # Check if "expression" is just a single constant
+        if (tokens[0][1] == "ID" and tokens[1][1] == "("):
             # Create node with function name
             tree = Tree()
             call_node = Node(tag=tokens[0][0])
@@ -356,7 +348,23 @@ def help_func_expression(grammar, tokens):
                     token_skip += 1
                     param_node = Node(tag=tokens[i][0])
                     tree.add_node(param_node, parent=param_node)
-            return (tree, token_skip)
+            return [tree, token_skip]
+        elif (
+            (
+                tokens[0][1] == "NUMCONST" or 
+                tokens[0][1] == "FLOATCONST" or
+                tokens[0][1] == "CHARCONST" or
+                tokens[0][1] == "STRINGCONST" or
+                tokens[0][1] == "true" or
+                tokens[0][1] == "false" or
+                tokens[0][1] == "ID"
+            )
+        ):
+            # Expression is a constant or named variable
+            tree = Tree()
+            value_node = Node(tag=tokens[0][0])
+            tree.add_node(value_node, parent=None)
+            return [tree, 1]
         else:
             print("TODO: THROW ERROR")
             sys.exit(1)
@@ -374,7 +382,7 @@ def help_func_expression(grammar, tokens):
     tree.paste(op_node.identifier, expr_l[0])
     tree.paste(op_node.identifier, expr_r[0])
 
-    return (tree, tokens.index(lowest_prec_op) + 1 + expr_r[1])
+    return [tree, tokens.index(lowest_prec_op) + 1 + expr_r[1]]
 
 def help_func_funDeclaration(grammar, tokens):
     #first token is return type
@@ -382,7 +390,8 @@ def help_func_funDeclaration(grammar, tokens):
     #the third token is the (
     #sometime after that should be a 
     #)
-    assert(len(tokens) >= 6)
+    print(tokens)
+    assert(len(tokens) >= 4)
 
     tree = Tree()
 
@@ -392,8 +401,8 @@ def help_func_funDeclaration(grammar, tokens):
     body_node = Node(tag="func_body")
 
     # create root node
-    func_root = Node(tag="func:"+tokens[1])
-    return_type = Node(tag=tokens[0])
+    func_root = Node(tag="func:"+tokens[1][0])
+    return_type = Node(tag=tokens[0][0])
 
     # Assemble basic subtree
     tree.add_node(func_root, parent=None)
@@ -405,8 +414,12 @@ def help_func_funDeclaration(grammar, tokens):
 
     # Create and add params nodes
     params = []
+    var_case = 0    # 0 = empty, 1 = void, 2 = variables
     for i in range (3, len(tokens), 3):
-        if (tokens[i] == ")"):
+        if (i == 3 and tokens[i][0] == 'void'):
+            var_case = 1
+            break
+        elif (tokens[i][0] == ")"):
             break
         else:
             try:
@@ -414,9 +427,12 @@ def help_func_funDeclaration(grammar, tokens):
                 # i+0 = type
                 # i+1 = name
                 # i+3 = comma if it exists
+                var_case = 2
             except:
                 raise Exception(errors.ERR_BAD_FUNC_PAR + " '" + tokens[i][0] +
                                 "' on line " + str(tokens[i][2]))
+            if (tokens[i+2][0] != ','):
+                break
 
     for param in params:
         type_node = Node(tag=param[0])
@@ -427,11 +443,29 @@ def help_func_funDeclaration(grammar, tokens):
         #check grammar rules
 
     # Create and add body 
-    body_tree = run_parser(grammar, tokens[4 + (3*(len(params)))], look_for_brace=False) #may be off by one
-    #print("HANNAH: GLUE THESE TREES TOGETHER")
+    body_tokens = []
+    skip_tokens = 0
+    if (var_case % 3 == 0):
+        # Empty parameters
+        body_tokens = tokens[5:]
+        skip_tokens = 5
+        pass
+    elif (var_case % 3 == 1):
+        # Void parameter
+        body_tokens = tokens[6:]
+        skip_tokens = 6
+        pass
+    elif (var_case % 3 == 2):
+        # Has paremeters
+        body_tokens = tokens[4 + (3*(len(params))):]
+        skip_tokens = 4 + (3*(len(params)))
+        pass
+
+    parser_out = run_parser(body_tokens, grammar, look_for_brace=True) #may be off by one
+    body_tree = parser_out[0]
     tree.paste(body_node.identifier, body_tree)
 
-    return tree
+    return [tree, skip_tokens]
 
 def help_func_block(grammar, tokens):
 
@@ -439,6 +473,8 @@ def help_func_block(grammar, tokens):
     # How does the subtree for this block get added to the parse tree?
     # Parse tree could be added to the passed parameters, or
     # Subtree could be returned as function result
+
+    # Should return (tree, tokens to skip)
 
     for i in range(0, len(tokens)):
         if (num_tokens_to_skip > 0):
@@ -476,7 +512,6 @@ def check_rules(node_rule, tokens, grammar):
     # print(grammar["funDeclaration"])
     stack_possible_matches = []
     stack_actual_matches = []
-    stack = []
 
     for elem in grammar:
         for rule in grammar[elem]:
@@ -485,7 +520,6 @@ def check_rules(node_rule, tokens, grammar):
                     stack_possible_matches.append(elem)
                 # print(tokens)
 
-    tmp_rules = grammar[node_rule]
     for elem in stack_possible_matches:
         # if that rule can appear after cur_node
         if (is_possible_rule(node_rule, elem, grammar)):
