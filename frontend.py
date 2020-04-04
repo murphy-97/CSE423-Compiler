@@ -195,7 +195,7 @@ def run_scanner(code_lines):
 def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
     tree = Tree()
     # create root node
-    root = Node(tag="body")
+    root = Node(tag=root_name)
     tree.add_node(root, parent=None)
     num_tokens_to_skip = 0
     list_of_tokens = []
@@ -408,7 +408,6 @@ def help_func_funDeclaration(grammar, tokens):
     tree.add_node(func_root, parent=None)
     tree.add_node(return_node, parent=func_root)
     tree.add_node(params_node, parent=func_root)
-    tree.add_node(body_node, parent=func_root)
 
     tree.add_node(return_type, parent=return_node)
 
@@ -461,9 +460,9 @@ def help_func_funDeclaration(grammar, tokens):
         skip_tokens = 4 + (3*(len(params)))
         pass
 
-    parser_out = run_parser(body_tokens, grammar, look_for_brace=True) #may be off by one
+    parser_out = run_parser(body_tokens, grammar, look_for_brace=True, root_name="func_body") #may be off by one
     body_tree = parser_out[0]
-    tree.paste(body_node.identifier, body_tree)
+    tree.paste(func_root.identifier, body_tree)
 
     return [tree, skip_tokens]
 
