@@ -230,12 +230,18 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
             raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
                             "' on line " + str(tokens[i][2]))
 
-    return [tree, 0]
+    return [tree, num_tokens_to_skip]
 
 
 def help_func_manager(result, grammar, tokens):
     # if (#is preprocessor):
     #     return (None, #something)
+
+    print("Create case for block detection!")
+    # Block detection:
+    # Advance until encoutner { or }
+    # If {: Then call block handler on tokens starting at {
+    # If }: Then call parser on tokens between { and }
 
     if (result[1][0] == "varDeclaration"):
         return help_func_varDeclaration(grammar, tokens)
@@ -341,7 +347,7 @@ def help_func_expression(grammar, tokens):
             token_skip = 3
 
             # Children of node are function parameters
-            for i in range(2, tokens.length):
+            for i in range(2, len(tokens)):
                 if (tokens[i][1] == "("):
                     break
                 else:
@@ -446,25 +452,25 @@ def help_func_funDeclaration(grammar, tokens):
     skip_tokens = 0
     if (var_case % 3 == 0):
         # Empty parameters
-        body_tokens = tokens[5:]
-        skip_tokens = 5
+        body_tokens = tokens[4:]
+        skip_tokens = 4
         pass
     elif (var_case % 3 == 1):
         # Void parameter
-        body_tokens = tokens[6:]
-        skip_tokens = 6
+        body_tokens = tokens[5:]
+        skip_tokens = 5
         pass
     elif (var_case % 3 == 2):
         # Has paremeters
-        body_tokens = tokens[4 + (3*(len(params))):]
-        skip_tokens = 4 + (3*(len(params)))
+        body_tokens = tokens[3 + (3*(len(params))):]
+        skip_tokens = 3 + (3*(len(params)))
         pass
 
     parser_out = run_parser(body_tokens, grammar, look_for_brace=True, root_name="func_body") #may be off by one
     body_tree = parser_out[0]
     tree.paste(func_root.identifier, body_tree)
 
-    return [tree, skip_tokens]
+    return [tree, skip_tokens + parser_out[1]]
 
 def help_func_block(grammar, tokens):
 
