@@ -41,43 +41,55 @@ def build_llvm(ast):
     # Create module
     module = ir.Module(name="program")
 
-    # Iterate through children of root to find functions node
-    # Is there a better way to get all children of a given node?
-    func_node = None
-    for node in ast.all_nodes():
-        #node = ast.get_node(node)
+    # Iterate through children of root
+    for node in ast.children(ast.root):
+        if (node.tag.index("func:") == 0):
+            # Function definition found
+            func_name = node.tag[5:]
+            func_return = ""
+            func_params = []
 
-        if (node.tag == "functions" and ast.parent(node.identifier).is_root()):
-            func_node = node
-            break
+            # Iterate through node children to:
+            #   Define type
+            #   Define params
+            #   Find body
 
-    assert(func_node is not None)
+            func_body = None
 
-    # Iterate through children of function node
-    for node in ast.all_nodes():
-        if (ast.parent(node.identifier) == func_node):
-            # Function header found
-            func_name = node.tag[0]
+            for child in ast.children(node.identifier):
+                if (child.tag == "return_type"):
+                    func_return = ast.children(child.identifier)[0].tag
+                    assert(len(func_return) > 0)
 
-            # Assign return type (cannot be none)
-            type_return = None
-            if (node.tag[1] in type_dict):
-                type_return = type_dict[node.tag[1]]
+                elif (child.tag == "params"):
+                    for param in ast.children(child.identifier):
+                        param_type = param.tag
+                        param_name = ast.children(param.identifier)[0].tag
+                        func_params.append([param_type, param_name])
+
+                elif (child.tag == "func_body"):
+                    func_body = child
+
+            assert(func_body is not None)
+
+            # Verify that types are known and update to IR type objects
+            if (func_return in type_dict):
+                func_return = type_dict[func_return]
             else:
-                raise Exception("Unknown Type: " + node.tag[1])
+                raise Exception("Unknown Type: " + func_return)
 
-            # List parameter types
-            types_param = []
-            for param in node.tag[2]:
-                if (param in type_dict):
-                    types_param.append(type_dict[param])
+            for param in func_params:
+                if (param[0] in type_dict):
+                    param[0] = type_dict[param[0]]
                 else:
-                    raise Exception("Unknown Type: " + param)
+                    raise Exception("Unknown Type: " + param[0])
 
-            # Define function type
-            func_type = ir.FunctionType(type_return, tuple(types_param))
+            # Create function in LLVM
+            func_type = ir.FunctionType(
+                func_return,
+                tuple([p[0] for p in func_params]) # Tuple of param types
+            )
 
-            # Create function
             function = ir.Function(module, func_type, name=func_name)
 
             # Build function
@@ -89,6 +101,9 @@ def build_llvm(ast):
             # PLACEHOLDER - RETURNS WITHOUT A VALUE
             builder.ret_void()
 
+        elif (True):
+            print("Handle case for global variables")
+
     # Return LLVM module
     return module
 
@@ -98,43 +113,68 @@ def main():
     # Create dummy AST
     ast_dummy = Tree()
     ast_root = Node(tag="program")
-    ast_dummy.add_node(ast_root)
+    ast_dummy.add_node(ast_root, parent=None)
 
-    # Create child nodes for globals and functions
-    ast_glob = Node(tag="globals")
-    ast_func = Node(tag="functions")
+    # Create nodes for add_int()
+    func_root = Node(tag="func:add_int")
+    func_type = Node(tag="return_type")
+    func_param = Node(tag="params")
+    func_body = Node(tag="func_body")
 
-    ast_dummy.add_node(ast_glob, parent=ast_root)
-    ast_dummy.add_node(ast_func, parent=ast_root)
+    ast_dummy.add_node(func_root, parent=ast_root)
+    ast_dummy.add_node(func_type, parent=func_root)
+    ast_dummy.add_node(func_param, parent=func_root)
+    ast_dummy.add_node(func_body, parent=func_root)
 
-    # Create nodes for each function
-    ast_dummy.add_node(
-        Node(
-            tag=("add_int", "int", ("int", "int",))
-            # add_int
-            # |-- return type
-            # |   +-- int
-            # |-- params
-            # |   |-- int
-            # |   |   +-- a
-            # |   +-- int
-            # |       |-- b
-            # +-- body
-            #     |-- declaration
-        ),
-        parent=ast_func
-    )
+    ### add_int(): return and params
+    return_type = Node(tag="int")
+    ast_dummy.add_node(return_type, parent=func_type)
 
-    ast_dummy.add_node(
-        Node(
-            tag=("main", "int", ("void",))
-        ),
-        parent=ast_func
-    )
+    param_type = Node(tag="int")
+    ast_dummy.add_node(param_type, parent=func_param)
+    ast_dummy.add_node(Node(tag="x"), parent=param_type)
+    param_type = Node(tag="int")
+    ast_dummy.add_node(param_type, parent=func_param)
+    ast_dummy.add_node(Node(tag="y"), parent=param_type)
+
+    ### add_int(): body
+    body_node_0 = Node(tag="return")
+    ast_dummy.add_node(body_node_0, parent=func_body)
+    body_node_1 = Node(tag="+")
+    ast_dummy.add_node(body_node_1, parent=body_node_0)
+    body_node_2 = Node(tag="x")
+    ast_dummy.add_node(body_node_2, parent=body_node_1)
+    body_node_2 = Node(tag="y")
+    ast_dummy.add_node(body_node_2, parent=body_node_1)
+
+    # Create nodes for main()
+    func_root = Node(tag="func:main")
+    func_type = Node(tag="return_type")
+    func_param = Node(tag="params")
+    func_body = Node(tag="func_body")
+
+    ast_dummy.add_node(func_root, parent=ast_root)
+    ast_dummy.add_node(func_type, parent=func_root)
+    ast_dummy.add_node(func_param, parent=func_root)
+    ast_dummy.add_node(func_body, parent=func_root)
+
+    ### add_int(): return and params
+    return_type = Node(tag="int")
+    ast_dummy.add_node(return_type, parent=func_type)
+
+    ### add_int(): body
+    body_node_0 = Node(tag="return")
+    ast_dummy.add_node(body_node_0, parent=func_body)
+    body_node_1 = Node(tag="add_int")
+    ast_dummy.add_node(body_node_1, parent=body_node_0)
+    body_node_2 = Node(tag="1")
+    ast_dummy.add_node(body_node_2, parent=body_node_1)
+    body_node_2 = Node(tag="2")
+    ast_dummy.add_node(body_node_2, parent=body_node_1)
 
     # Print dummy AST
     print("=== DUMMY AST ===")
-    ast_dummy.show(None, 0, True, None, None, False, 'ascii', None)
+    ast_dummy.show(key=lambda x: x.identifier, line_type='ascii')
 
     # Convert dummy AST into LLVM
     llvm_ir = build_llvm(ast_dummy)
