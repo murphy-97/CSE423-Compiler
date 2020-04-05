@@ -139,6 +139,8 @@ def run_scanner(code_lines):
 
         if (token in ["$newline$"]):
             line_counter += 1
+        elif (token in ["="]):
+             tokens_descriptive.append([token, "=", line_counter])
         elif (token in ["+", "-"]):
             tokens_descriptive.append([token, "sumop", line_counter])
         elif (token in ["&&"]):
@@ -330,7 +332,8 @@ def help_func_expression(grammar, tokens):
         "||":    40,
         "relop": 30,
         "mulop": 20,
-        "sumop": 10
+        "sumop": 10,
+        asdf
     }
 
     for token in tokens:

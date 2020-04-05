@@ -3,7 +3,7 @@ declarationList ~ declarationList declaration | declaration
 declaration ~ varDeclaration | funDeclaration
 varDeclaration ~ typeSpecifier varDeclInitialize ;
 ParamDeclaration ~ typeSpecifier ID ;
-varDeclInitialize ~ ID simpleExpression
+varDeclInitialize ~ ID = simpleExpression
 typeSpecifier ~ int | bool | char
 funDeclaration ~ typeSpecifier ID ( params ) compoundStmt
 params ~ paramList | epsilon
