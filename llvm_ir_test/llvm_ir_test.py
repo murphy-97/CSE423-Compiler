@@ -195,14 +195,16 @@ def build_llvm(ast):
                         # (x && y) is equivialent to ((x * y) != 0)
                         step_1 = builder.fmul(operand_l, operand_r)
                         step_2 = ir.Constant(type_dict["int"], 0)
-                        result = builder.icmp_signed("!=", step_1, step_2)
+                        result = builder.icmp_signed('!=', step_1, step_2)
 
                     elif (iter_node.tag == '||'):
                         # Must be implmemented using other operators
-                        # (x || y) is equivialent to ((x + y) != 0)
+                        # (x || y) is equivialent to ((x + y)+(x * y) != 0)
                         step_1 = builder.fadd(operand_l, operand_r)
-                        step_2 = ir.Constant(type_dict["int"], 0)
-                        result = builder.icmp_signed("!=", step_1, step_2)
+                        step_2 = builder.fmul(operand_l, operand_r)
+                        step_3 = builder.fadd(step_1, step_2)
+                        step_4 = ir.Constant(type_dict["int"], 0)
+                        result = builder.icmp_signed('!=', step_3, step_4)
 
                     elif (iter_node.tag in ['<', '>', '<=', '>=', '==', '!=']):
                         result = builder.icmp_signed(iter_node.tag, operand_l, operand_r)
