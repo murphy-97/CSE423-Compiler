@@ -232,6 +232,7 @@ def build_llvm(ast):
                 elif (iter_node.tag == 'return'):
                     if (len(ast.children(iter_node.identifier)) == 0):
                         # Void return
+                        assert(func_return == type_dict["void"])
                         builder.ret_void()
                     else:
                         # Returning an expression
