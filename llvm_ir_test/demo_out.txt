@@ -1,24 +1,47 @@
 === DUMMY AST ===
 program
-|-- functions
-|   |-- ('add_int', 'int', ('int', 'int'))
-|   +-- ('main', 'int', ('void',))
-+-- globals
+|-- func:add_int
+|   |-- return_type
+|   |   +-- int
+|   |-- params
+|   |   |-- int
+|   |   |   +-- x
+|   |   +-- int
+|   |       +-- y
+|   +-- func_body
+|       +-- return
+|           +-- +
+|               |-- x
+|               +-- y
++-- func:main
+    |-- return_type
+    |   +-- int
+    |-- params
+    +-- func_body
+        +-- return
+            +-- add_int
+                |-- 1
+                +-- 2
 
+x : c7ea76b0-778b-11ea-99f3-340286baf6d9
+y : c7ea76b1-778b-11ea-8e51-340286baf6d9
+1 : c7ea76b9-778b-11ea-95ad-340286baf6d9
+2 : c7ea76ba-778b-11ea-abcf-340286baf6d9
 === LLVM IR OUTPUT ===
 ; ModuleID = "program"
 target triple = "unknown-unknown-unknown"
 target datalayout = ""
 
-define i8 @"add_int"(i8 %".1", i8 %".2") 
+define i8 @"add_int"(i8 %".1", i8 %".2")
 {
 entry:
-  ret void
+  %".4" = fadd i8 %".1", %".2"
+  ret i8 %".4"
 }
 
-define i8 @"main"(void %".1") 
+define i8 @"main"()
 {
 entry:
-  ret void
+  %".2" = call i8 @"add_int"(i8 1, i8 2)
+  ret i8 2
 }
-
