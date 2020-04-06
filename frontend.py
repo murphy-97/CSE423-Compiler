@@ -45,7 +45,7 @@ def run_scanner(code_lines):
     replace_space_array = [";", "(", ")", "{", "}", "=", "<", ">", "+", "-",
                            ","]
     single_tokens = ["(", ")", "{", "}", ",", ";", "=", "++", "--", "+=", "-=",
-                     "*=", "/=", "true", "false"]
+                     "*=", "/=", "%=", "true", "false"]
 
     # replace_array = ["\n"] # Unused variable. Commented out
 
@@ -78,6 +78,7 @@ def run_scanner(code_lines):
     entire_doc = entire_doc.replace("-=", "$minus_equals$")
     entire_doc = entire_doc.replace("*=", "$mult_equals$")
     entire_doc = entire_doc.replace("/=", "$divide_equals$")
+    entire_doc = entire_doc.replace("%=", "$mod_equals$")
     entire_doc = entire_doc.replace("==", "$equals$")
     entire_doc = entire_doc.replace("<<", "$left$")
     entire_doc = entire_doc.replace(">>", "$right$")
@@ -107,6 +108,7 @@ def run_scanner(code_lines):
     entire_doc = entire_doc.replace("$minus_equals$", " -= ")
     entire_doc = entire_doc.replace("$mult_equals$", " *= ")
     entire_doc = entire_doc.replace("$divide_equals$", " /= ")
+    entire_doc = entire_doc.replace("$mod_equals$", " %= ")
     entire_doc = entire_doc.replace("$equals$", " == ")
     entire_doc = entire_doc.replace("$left$", " << ")
     entire_doc = entire_doc.replace("$right$", " >> ")
