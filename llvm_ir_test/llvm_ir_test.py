@@ -122,8 +122,8 @@ def build_llvm(ast):
             # Begin reverse level order traversal of parse tree
 
             bin_ops = ['=', '+', '-', '*', '/', '%', '&&', '||', '<', '>', "<=",
-                '>=', '==']
-            una_ops = ['++', '--', '+=', '-=', '*=', '/=', '<<', '>>']
+                '>=', '==', '+=', '-=', '*=', '/=', '<<', '>>']
+            una_ops = ['++', '--']
 
             while (len(node_stack) > 0):
 
@@ -131,7 +131,7 @@ def build_llvm(ast):
 
                 '''
                 TO DO:
-                - Unary operations
+                - Test unary operations
                 - Flow control
                 - Test variable assignment (=)
                 - Constant types other than int or float?
@@ -155,18 +155,48 @@ def build_llvm(ast):
 
                     result = None
 
-                    if (iter_node.tag == '='):
+                    if (iter_node.tag in ['+=', '-=', '*=', '/=', '%=', '=']):
                         # Local variables only exist in the builder and not the final IR
                         # Values are stored in the func_locals dictionary
                         #   Key = variable name as seen in iter_node.tag
                         #   Value = IR generated result from right hand of assignment
                         var_name = ast.children(iter_node.identifier)[0].tag
 
-                        if (iter_node.tag in func_locals):
+                        if (iter_node.tag in ['+=', '-=', '*=', '/=', '%=']):
+                            # Get current value of left operand
+                            if (var_name in func_locals):
+                                operand_l = func_locals[var_name]
+
+                            elif (var_name in [p[1] for p in func_params]):
+                                operand_l = function.args[
+                                    [p[1] for p in func_params].index(var_name)
+                                ]
+
+                            else:
+                                assert(False)
+
+                            # Evaluate right side operand
+                            if (iter_node.tag == '+='):
+                                operand_r = builder.fadd(operand_l, operand_r)
+
+                            elif (iter_node.tag == '-='):
+                                operand_r = builder.fsub(operand_l, operand_r)
+
+                            elif (iter_node.tag == '*='):
+                                operand_r = builder.fmul(operand_l, operand_r)
+
+                            elif (iter_node.tag == '/='):
+                                operand_r = builder.fdiv(operand_l, operand_r)
+
+                            elif (iter_node.tag == '%='):
+                                operand_r = builder.frem(operand_l, operand_r)
+
+                        # Assign new value where appropriate
+                        if (var_name in func_locals):
                             # Assigning new value to existing local variable
                             func_locals[var_name] = operand_r
 
-                        elif (iter_node.tag in [p[1] for p in func_params]):
+                        elif (var_name in [p[1] for p in func_params]):
                             # Assigning new value to function parameter
                             # Create "copy" of parameter as local variable
                             func_locals[var_name] = operand_r
@@ -211,6 +241,13 @@ def build_llvm(ast):
                         # This is the signed comparison.
                         # There's also an unsigned comparison if we care about that
 
+                    elif (iter_node.tag == '<<'):
+                        result = builder.shl(operand_l, operand_r)
+
+                    elif (iter_node.tag == '>>'):
+                        # Using arithmetic right shift (C/C++ norm) instead of logical shift
+                        result = builder.ashr(operand_l, operand_r)
+
                     assert(result is not None)  # Verify that one of the above cases was satisfied
                     node_results[iter_node.identifier] = result # Store IR result
 
@@ -221,11 +258,52 @@ def build_llvm(ast):
                     child = ast.children(iter_node.identifier)[0].identifier
                     # Get IR representations of operand nodes
                     operand = node_results[child]
+                    var_name = ast.children(iter_node.identifier)[0].tag
 
                     result = None
 
-                    print("TO DO: Add cases for unary operators")
-                    
+                    # Construct arithmetic statement
+                    if (iter_node.tag in ['++', '--']):
+                        print("Unary Ops: ++ and -- modify value but act like assignment")
+
+                        # Get current value of left operand
+                        if (var_name in func_locals):
+                            operand = func_locals[var_name]
+                        elif (var_name in [p[1] for p in func_params]):
+                            operand = function.args[
+                                [p[1] for p in func_params].index(var_name)
+                            ]
+                        else:
+                            assert(False)
+
+                        if (iter_node.tag == '++'):
+                            result = builder.fadd(
+                                operand,
+                                ir.Constant(type_dict["int"], 1)
+                            )
+
+                        elif (iter_node.tag == '--'):
+                            result = builder.fsub(
+                                operand,
+                                ir.Constant(type_dict["int"], 1)
+                            )
+
+                        assert(result is not None)
+
+                        # Assign new value where appropriate
+                        if (var_name in func_locals):
+                            # Assigning new value to existing local variable
+                            func_locals[var_name] = operand_r
+
+                        elif (var_name in [p[1] for p in func_params]):
+                            # Assigning new value to function parameter
+                            # Create "copy" of parameter as local variable
+                            func_locals[var_name] = operand_r
+
+                        else:
+                            # Defining new local variable
+                            func_locals[var_name] = operand_r
+
                     assert(result is not None)  # Verify that one of the above cases was satisfied
                     node_results[iter_node.identifier] = result # Store IR result
 
