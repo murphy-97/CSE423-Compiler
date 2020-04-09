@@ -26,14 +26,18 @@ def run_frontend(code_lines, print_scn, print_prs):
 
     print('Parsing')
     grammar = parse_grammar(open('grammar.txt', "r"))
-    ast = run_parser(tokens, grammar)
+    ast = run_parser(tokens, grammar)[0]
 
     # Command line option to print parser output
     if (print_prs):
         print("\n====== PARSER OUTPUT ======")
         ast.show(key=lambda x: x.identifier, line_type='ascii')
 
-    return ast
+
+    # Convert tree to IR
+    print("HANNAH: Plug in the IR builder so we get meaningful output")
+    ir = ["This", "is", "a", "placeholder"]
+    return ir
 
 
 # Scanner/tokenizer for compiler frontend
@@ -239,6 +243,8 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
             list_of_tokens = []
         elif (result[0] == 0):
             #matches zero rules. parser crash
+            print("RESULT:", result)
+            print("TOKEN LIST:", list_of_tokens)
             raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
                             "' on line " + str(tokens[i][2]))
 
@@ -248,12 +254,6 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
 def help_func_manager(result, grammar, tokens):
     # if (#is preprocessor):
     #     return (None, #something)
-
-    print("Create case for block detection!")
-    # Block detection:
-    # Advance until encoutner { or }
-    # If {: Then call block handler on tokens starting at {
-    # If }: Then call parser on tokens between { and }
 
     if (result[1][0] == "varDeclaration"):
         return help_func_varDeclaration(grammar, tokens)
@@ -300,7 +300,6 @@ def help_func_iterationStmt(grammar, tokens):
     tree.add_node(Node(tag="Placeholder Iterationt"), parent=None)
     return [tree, 0]
 
-print("Go back through and fix all tokens to actually refer to the correct index like tokens[i][0] or tokens[i][1]")
 def help_func_return(grammar, tokens):
     tree = Tree()
     return_node = Node(tag=tokens[0][1])
@@ -320,12 +319,6 @@ def help_func_expression(grammar, tokens):
     #    (len(tokens) >= 1 and tokens[0][0] == ';') or
     #    len(tokens) >= 2
     #)
-
-    # Find first semi-colon
-    semi_colon_index = -1
-    for i in range(len(tokens)):
-        if tokens[i][0] == ';':
-            semi_colon_index = i
 
     # Find the lowest precedence operator
     lowest_prec_op = []
@@ -349,7 +342,7 @@ def help_func_expression(grammar, tokens):
 
     if (len(lowest_prec_op) == 0):
         # Check if "expression" is just a single constant
-        if (tokens[0][1] == "ID" and tokens[1][1] == "("):
+        if (len(tokens) > 1 and tokens[0][1] == "ID" and tokens[1][1] == "("):
             # Create node with function name
             tree = Tree()
             call_node = Node(tag=tokens[0][0])
@@ -382,9 +375,9 @@ def help_func_expression(grammar, tokens):
             tree.add_node(value_node, parent=None)
             return [tree, 1]
         else:
-            print("TODO: THROW ERROR")
+            print("SOME KIND OF ERROR")
             print("Tokens:", tokens)
-            sys.exit(1)
+            raise Exception("Test")
 
     # Lowest precedence operator found
     # Lowest precedence operator is root.
@@ -486,15 +479,15 @@ def help_func_funDeclaration(grammar, tokens):
         pass
 
     #call help_func_block
-    parser_out = run_parser(body_tokens, grammar, look_for_brace=True, root_name="func_body") #may be off by one
-    body_tree = parser_out[0]
+    #parser_out = run_parser(body_tokens, grammar, look_for_brace=True, root_name="func_body") #may be off by one
+    block_out = help_func_block(grammar, body_tokens, root_name="func_body")
+    body_tree = block_out[0]
     tree.paste(func_root.identifier, body_tree)
 
-    return [tree, skip_tokens + parser_out[1]]
+    return [tree, skip_tokens + block_out[1]]
 
-def help_func_block(grammar, tokens):
+def help_func_block(grammar, tokens, root_name="block"):
 
-    print("FUNCTION TO BE REVISED. SEE COMMENTS - help_func_block(), frontend.py")
     # How does the subtree for this block get added to the parse tree?
     # Parse tree could be added to the passed parameters, or
     # Subtree could be returned as function result
@@ -510,29 +503,68 @@ def help_func_block(grammar, tokens):
         #call expression handeler on that sub list
         #returns a tree which is appended
 
+    tree = Tree()
+    root_node = Node(tag=root_name)
+    tree.add_node(root_node, parent=None)
+
     front_index = 0
     num_tokens_to_skip = 0
-    for i in range(0, len(tokens):
-        if (tokens[i] == "}"):
-            #return
-        elif (tokens[i] == "{"):
+
+    i = 0
+    while (i < len(tokens)):
+        print("i = " + str(i), "token =", tokens[i])
+        if (tokens[i][0] == "}"):
+            print("OUTPUT:", tokens[num_tokens_to_skip + 1:])
+            return [tree, num_tokens_to_skip + 1]
+
+        elif (tokens[i][0] == "{"):
             result = help_func_block(grammar, tokens[i+1:])
-            i += 1 + result[1]
+            
             front_index += 1 + result[1]
+            i += 1 + result[1]
             num_tokens_to_skip += 1 + result[1]
-            #tree things
-        elif (tokens[i] == ";"):
-            back_index = i #not inclusive
+
+            tree.paste(root_node.identifier, result[0])
+
+        elif (tokens[i][0] == "if"):
+            print("TO DO: Special case for 'if'")
+
+        elif (tokens[i][0] == "while"):
+            print("TO DO: Special case for 'while'")
+
+        elif (tokens[i][0] == "return"):
+
+            print("RETURN")
+            print("i:", i, tokens[i])
+            print("f:", front_index)
+            print("ft:", tokens[front_index])
+
+            result = help_func_return(grammar, tokens[i:])
+            front_index += result[1]
+            i += result[1]
+            num_tokens_to_skip += result[1]
+
+            tree.paste(root_node.identifier, result[0])
+
+        elif (tokens[i][0] == ";"):
+            back_index = i
+
+            print("EXPRESSION")
+            print("f:", front_index, tokens[front_index])
+            print("b:", back_index, tokens[back_index])
+
             result = help_func_expression(grammar, tokens[front_index:back_index])
             front_index = back_index + 1
-            i += 1 + result[1]
-            front_index += 1 + result[1]
+            i += 1
             num_tokens_to_skip += 1 + result[1]
-            #tree things
+            tree.paste(root_node.identifier, result[0])
 
+        else:
+            i += 1
 
-
-
+    # Iterated through tokens without closing '}'
+    raise Exception(errors.ERR_NO_BLOCK_END + " on line " + str(tokens[i-1][2]))
+    return [tree, num_tokens_to_skip]
 
     # for i in range(0, len(tokens)):
     #     if (num_tokens_to_skip > 0):
