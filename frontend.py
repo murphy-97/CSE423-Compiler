@@ -335,7 +335,6 @@ def help_func_expression(grammar, tokens):
         "relop": 30,
         "mulop": 20,
         "sumop": 10,
-        asdf
     }
 
     for token in tokens:
@@ -486,6 +485,7 @@ def help_func_funDeclaration(grammar, tokens):
         skip_tokens = 4 + (3*(len(params)))
         pass
 
+    #call help_func_block
     parser_out = run_parser(body_tokens, grammar, look_for_brace=True, root_name="func_body") #may be off by one
     body_tree = parser_out[0]
     tree.paste(func_root.identifier, body_tree)
@@ -501,32 +501,65 @@ def help_func_block(grammar, tokens):
 
     # Should return (tree, tokens to skip)
 
-    for i in range(0, len(tokens)):
-        if (num_tokens_to_skip > 0):
-            num_tokens_to_skip -= 1
-            continue
-        list_of_tokens.append(tokens[i])
+    #go line by line
+    #if }
+        #return tree
+    #if {
+        #recursive help_func_block
+    #grab up to till first ;
+        #call expression handeler on that sub list
+        #returns a tree which is appended
 
-        result = check_rules(tokens[i][1], list_of_tokens, grammar)
-        if (result[0] > 1): #matches more than one possible rule
-            continue
-        elif (result[0] == 1): #matches one possible rule
-            help_fun_tuple = help_func_manager(
-                result,
-                grammar,
-                tokens[i - len(list_of_tokens):-1] #may be off by one
-            )
-            sub_tree = help_fun_tuple[0]
-            num_tokens_to_skip = help_fun_tuple[1]
-            #may or may not need to subtract one from num_tokes_to_skip
-            #print("Hannah: add the sub_tree here to root as a child")
-            tree.paste(root.identifier, sub_tree)
-            #call helper function
-            list_of_tokens = []
-        elif (result[0] == 0):
-            #matches zero rules. parser crash
-            raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
-                            "' on line " + str(tokens[i][2]))
+    front_index = 0
+    num_tokens_to_skip = 0
+    for i in range(0, len(tokens):
+        if (tokens[i] == "}"):
+            #return
+        elif (tokens[i] == "{"):
+            result = help_func_block(grammar, tokens[i+1:])
+            i += 1 + result[1]
+            front_index += 1 + result[1]
+            num_tokens_to_skip += 1 + result[1]
+            #tree things
+        elif (tokens[i] == ";"):
+            back_index = i #not inclusive
+            result = help_func_expression(grammar, tokens[front_index:back_index])
+            front_index = back_index + 1
+            i += 1 + result[1]
+            front_index += 1 + result[1]
+            num_tokens_to_skip += 1 + result[1]
+            #tree things
+
+
+
+
+
+    # for i in range(0, len(tokens)):
+    #     if (num_tokens_to_skip > 0):
+    #         num_tokens_to_skip -= 1
+    #         continue
+    #     list_of_tokens.append(tokens[i])
+
+    #     result = check_rules(tokens[i][1], list_of_tokens, grammar)
+    #     if (result[0] > 1): #matches more than one possible rule
+    #         continue
+    #     elif (result[0] == 1): #matches one possible rule
+    #         help_fun_tuple = help_func_manager(
+    #             result,
+    #             grammar,
+    #             tokens[i - len(list_of_tokens):-1] #may be off by one
+    #         )
+    #         sub_tree = help_fun_tuple[0]
+    #         num_tokens_to_skip = help_fun_tuple[1]
+    #         #may or may not need to subtract one from num_tokes_to_skip
+    #         #print("Hannah: add the sub_tree here to root as a child")
+    #         tree.paste(root.identifier, sub_tree)
+    #         #call helper function
+    #         list_of_tokens = []
+    #     elif (result[0] == 0):
+    #         #matches zero rules. parser crash
+    #         raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
+    #                         "' on line " + str(tokens[i][2]))
 
 # checks if the current token should result in:
 # rejection, (0 matches)
