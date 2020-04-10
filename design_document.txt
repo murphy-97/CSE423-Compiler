@@ -65,7 +65,7 @@ PARSER:
     else statement: incomplete
     for statments: incomplete
     ++ --: incomplete
-    variable declaration: incomplete
+    variable declaration: complete
     function calling: incomplete
   
   IR:
