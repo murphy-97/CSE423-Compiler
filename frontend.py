@@ -316,11 +316,14 @@ def help_func_return(grammar, tokens):
 
 def help_func_expression(grammar, tokens):
 
+    tokens_skip = 0
     # Remove leading and trailing ( and )
     while (len(tokens) > 0 and (tokens[0][0] == '(' or tokens[0][0] == ')')):
         tokens.pop(0)
+        tokens_skip += 1
     while (len(tokens) > 0 and (tokens[-1][0] == '(' or tokens[-1][0] == ')')):
-        tokens.pop(-1)
+        tokens.pop()
+        tokens_skip += 1
 
     # Check for subexpression denoted by parentheses
     op_depth = []
@@ -337,7 +340,7 @@ def help_func_expression(grammar, tokens):
             paren_close = i
             depth -= 1
         op_depth.append(depth)
-
+    
     # Find the lowest precedence operator
     lowest_prec_op = []
     op_precedence = {
@@ -383,17 +386,22 @@ def help_func_expression(grammar, tokens):
             tree = Tree()
             call_node = Node(tag=tokens[0][0])
             tree.add_node(call_node, parent=None)
-            token_skip = 3
+            tokens_skip += 3
 
             # Children of node are function parameters
             for i in range(2, len(tokens)):
-                if (tokens[i][1] == "("):
+                if (tokens[i][0] == "("):
+                    print("TO DO: Handle parentheses in function calls")
                     break
+                elif (tokens[i][0] == ")"):
+                    break
+                elif (tokens[i][0] == ","):
+                    tokens_skip += 1
                 else:
-                    token_skip += 1
+                    tokens_skip += 1
                     param_node = Node(tag=tokens[i][0])
                     tree.add_node(param_node, parent=param_node)
-            return [tree, token_skip]
+            return [tree, tokens_skip]
         elif (
             (
                 tokens[0][1] == "NUMCONST" or 
@@ -406,10 +414,11 @@ def help_func_expression(grammar, tokens):
             )
         ):
             # Expression is a constant or named variable
+            tokens_skip += 1
             tree = Tree()
             value_node = Node(tag=tokens[0][0])
             tree.add_node(value_node, parent=None)
-            return [tree, 1]
+            return [tree, tokens_skip]
         else:
             raise Exception("Unknown token sequence: " + str(tokens))
 
@@ -420,7 +429,7 @@ def help_func_expression(grammar, tokens):
     tree.add_node(op_node, parent=None)
 
     # Recursive calls to make left and right subtrees
-    tokens_skip = 1
+    tokens_skip += 1
 
     tokens_l = tokens[:tokens.index(lowest_prec_op)]
     tokens_r = tokens[tokens.index(lowest_prec_op)+1:]
@@ -441,11 +450,15 @@ def help_func_expression(grammar, tokens):
         expr_l = help_func_expression(grammar, tokens_l)
         tree.paste(op_node.identifier, expr_l[0])
         tokens_skip += expr_l[1]
+    else:
+        tokens_skip += len(tokens_l)
 
     if (len(tokens_r) > 0 and has_tokens_r):
         expr_r = help_func_expression(grammar, tokens_r)
         tree.paste(op_node.identifier, expr_r[0])
         tokens_skip += expr_r[1]
+    else:
+        tokens_skip += len(tokens_r)
 
     return [tree, tokens_skip]
 
@@ -573,9 +586,11 @@ def help_func_block(grammar, tokens, root_name="block"):
             tree.add_node(if_cond, parent=if_node)
 
             first_bracket = -1
-            for token in tokens:
+            for token in tokens[i:]:
                 if (token[0] == '{'):
                     first_bracket = tokens.index(token)
+                elif (token[0] == '}'):
+                    break
             if (first_bracket < 0):
                 raise Exception("if without body '{' on line " + str(tokens[i][2]))
 

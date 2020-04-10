@@ -32,7 +32,6 @@ mulop ~ * | / | %
 unaryExpression ~ unaryop unaryExpression | factor
 unaryop ~ - | * | ?
 factor ~ immutable | ID
-immutable ~ ( expression ) | call | constant
 call~ID(args)
 args ~ argList | epsilon
 argList ~ argList , expression | expression
