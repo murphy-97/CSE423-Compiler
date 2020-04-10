@@ -14,12 +14,12 @@ compoundStmt ~ { localDeclarations statementList }
 localDeclarations ~ varDeclaration localDeclarations | epsilon
 statementList ~ statementList statement | epsilon
 elsifList ~ elsifList elsif simpleExpression then statement | epsilon
-selectionStmt ~ if simpleExpression then statement elsifList | if simpleExpression then statement elsifList else statement
+selectionStmt ~ if ( simpleExpression ) compoundStmt
 iterationRange ~ ID = simpleExpression .. simpleExpression | ID = simpleExpression .. simpleExpression : simpleExpression
-iterationStmt ~ while simpleExpression do statement | loop forever statement | loop iterationRange do statement
+iterationStmt ~ while ( simpleExpression ) compoundStmt
 returnStmt ~ return ; | return expression ;
 breakStmt ~ break ;
-expression ~ ID = expression | ID += expression | ID -= expression | ID *= expression | ID /= expression | ID ++ | ID -- | simpleExpression
+expression ~ ID = expression | ID += expression | ID -= expression | ID *= expression | ID /= expression | ID %= expression | ID ++ | ID -- | simpleExpression
 simpleExpression ~ simpleExpression || andExpression | andExpression
 andExpression ~ andExpression && unaryRelExpression | unaryRelExpression
 unaryRelExpression ~ !& unaryRelExpression | relExpression

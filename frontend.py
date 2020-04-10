@@ -36,7 +36,8 @@ def run_frontend(code_lines, print_scn, print_prs):
 
 
     # Convert tree to IR
-    ir = irb.build_llvm(ast)
+    #ir = irb.build_llvm(ast)
+    ir = "Placeholder for the IR"
     return ir
 
 
@@ -145,8 +146,8 @@ def run_scanner(code_lines):
 
         if (token in ["$newline$"]):
             line_counter += 1
-        elif (token in ["="]):
-             tokens_descriptive.append([token, "=", line_counter])
+        elif (token in ["=", "+=", "-=", "*=", "/=", "%="]):
+             tokens_descriptive.append([token, token, line_counter])
         elif (token in ["+", "-"]):
             tokens_descriptive.append([token, "sumop", line_counter])
         elif (token in ["&&"]):
@@ -165,11 +166,13 @@ def run_scanner(code_lines):
             tokens_descriptive.append([token, "return", line_counter])
         elif (token in single_tokens):
             tokens_descriptive.append([token, token, line_counter])
+        elif (token in [ "if", "while" ]):
+            tokens_descriptive.append([token, token, line_counter])
         elif (token in [
             "auto", "break", "else", "long", "switch", "case", "register",
             "typedef", "extern", "union", "continue", "for", "signed",
-            "do", "if", "static", "while", "default", "goto", "sizeof",
-            "volatile", "const", "unsigned"
+            "do", "static", "default", "goto", "sizeof", "volatile", "const",
+            "unsigned"
         ]):
             tokens_descriptive.append([token, "keyword", line_counter])
         elif (token in ["#include", "#define"]):
@@ -218,6 +221,7 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
         if (num_tokens_to_skip > 0):
             num_tokens_to_skip -= 1
             continue
+
         if (look_for_brace and tokens[i][0] == "}"):
             break
         list_of_tokens.append(tokens[i])    # append token and metadata
@@ -239,6 +243,7 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
             list_of_tokens = []
         elif (result[0] == 0):
             #matches zero rules. parser crash
+            tree.show(key=lambda x: x.identifier, line_type='ascii')
             print("ERRONEOUS RESULT:", result)
             print("ERRONEOUS TOKEN LIST:", list_of_tokens)
             raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
@@ -310,11 +315,28 @@ def help_func_return(grammar, tokens):
     return [tree, skip_tokens + 2]
 
 def help_func_expression(grammar, tokens):
-    # Called by help_funcs that are called by the manager
-    #assert(
-    #    (len(tokens) >= 1 and tokens[0][0] == ';') or
-    #    len(tokens) >= 2
-    #)
+
+    # Remove leading and trailing ( and )
+    while (len(tokens) > 0 and (tokens[0][0] == '(' or tokens[0][0] == ')')):
+        tokens.pop(0)
+    while (len(tokens) > 0 and (tokens[-1][0] == '(' or tokens[-1][0] == ')')):
+        tokens.pop(-1)
+
+    # Check for subexpression denoted by parentheses
+    op_depth = []
+    depth = 0
+    paren_open = -1
+    paren_close = -1
+    for i in range(len(tokens)):
+        if (tokens[i][0] == ';'):
+            break   # End of expression
+        elif (tokens[i][0] == '('):
+            depth += 1
+            paren_open = i
+        elif (tokens[i][0] == ')'):
+            paren_close = i
+            depth -= 1
+        op_depth.append(depth)
 
     # Find the lowest precedence operator
     lowest_prec_op = []
@@ -324,17 +346,35 @@ def help_func_expression(grammar, tokens):
         "relop": 30,
         "mulop": 20,
         "sumop": 10,
+        "=": 0,
+        "+=": 0,
+        "-=": 0,
+        "*=": 0,
+        "\=": 0,
+        "%=": 0,
     }
 
     for token in tokens:
         if (token[0] == ';'):
             break
         elif (token[1] in op_precedence):
-            if (
-                (len(lowest_prec_op) == 0) or
-                (op_precedence[token[1]] <= op_precedence[lowest_prec_op[1]])
-            ):
+
+            if (len(lowest_prec_op) == 0):
                 lowest_prec_op = token
+            else:
+                cur_token_depth = op_depth[tokens.index(token)]
+                lowest_prec_depth = op_depth[tokens.index(lowest_prec_op)]
+
+                if (cur_token_depth < lowest_prec_depth):
+                    # Higher depth guarantees replacement
+                    lowest_prec_op = token
+                elif (
+                    cur_token_depth == lowest_prec_depth and
+                    op_precedence[token[1]] <= op_precedence[lowest_prec_op[1]]
+                ):
+                    # To replace, must be on same depth and lower precedence
+                    lowest_prec_op = token
+
 
     if (len(lowest_prec_op) == 0):
         # Check if "expression" is just a single constant
@@ -385,12 +425,24 @@ def help_func_expression(grammar, tokens):
     tokens_l = tokens[:tokens.index(lowest_prec_op)]
     tokens_r = tokens[tokens.index(lowest_prec_op)+1:]
 
-    if (len(tokens_l) > 0):
+    has_tokens_l = False
+    for token in tokens_l:
+        if (token[0] != '(' and token[0] != ')'):
+            has_tokens_l = True
+            break
+
+    has_tokens_r = False
+    for token in tokens_r:
+        if (token[0] != '(' and token[0] != ')'):
+            has_tokens_r = True
+            break
+
+    if (len(tokens_l) > 0 and has_tokens_l):
         expr_l = help_func_expression(grammar, tokens_l)
         tree.paste(op_node.identifier, expr_l[0])
         tokens_skip += expr_l[1]
 
-    if (len(tokens_r) > 0):
+    if (len(tokens_r) > 0 and has_tokens_r):
         expr_r = help_func_expression(grammar, tokens_r)
         tree.paste(op_node.identifier, expr_r[0])
         tokens_skip += expr_r[1]
@@ -483,12 +535,6 @@ def help_func_funDeclaration(grammar, tokens):
 
 def help_func_block(grammar, tokens, root_name="block"):
 
-    # How does the subtree for this block get added to the parse tree?
-    # Parse tree could be added to the passed parameters, or
-    # Subtree could be returned as function result
-
-    # Should return (tree, tokens to skip)
-
     #go line by line
     #if }
         #return tree
@@ -520,7 +566,35 @@ def help_func_block(grammar, tokens, root_name="block"):
             tree.paste(root_node.identifier, result[0])
 
         elif (tokens[i][0] == "if"):
-            print("TO DO: Special case for 'if'")
+            if_node = Node(tag="if")
+            if_cond = Node(tag="condition")
+
+            tree.add_node(if_node, parent=root_node)
+            tree.add_node(if_cond, parent=if_node)
+
+            first_bracket = -1
+            for token in tokens:
+                if (token[0] == '{'):
+                    first_bracket = tokens.index(token)
+            if (first_bracket < 0):
+                raise Exception("if without body '{' on line " + str(tokens[i][2]))
+
+            cond_result = help_func_expression(grammar, tokens[i+2:first_bracket-1])
+            body_result = help_func_block(grammar, tokens[first_bracket+1:], root_name="if_body")
+
+            # Increment i, num_tokens_to_skip, and front_index
+            if_skip = 1    # if
+            if_skip += 1   # opening bracket
+            if_skip += 2   # parens
+            if_skip += cond_result[1]
+            if_skip += body_result[1]
+
+            num_tokens_to_skip += if_skip
+            front_index += if_skip
+            i += if_skip
+
+            tree.paste(if_cond.identifier, cond_result[0])
+            tree.paste(if_node.identifier, body_result[0])
 
         elif (tokens[i][0] == "while"):
             print("TO DO: Special case for 'while'")
@@ -535,18 +609,32 @@ def help_func_block(grammar, tokens, root_name="block"):
 
         elif (tokens[i][0] == ";"):
             back_index = i
-            result = help_func_expression(grammar, tokens[front_index:back_index])
-            front_index = back_index + 1
-            i += 1
-            num_tokens_to_skip += 1 + result[1]
-            tree.paste(root_node.identifier, result[0])
+
+            expr_tokens = tokens[front_index:back_index]
+
+            # Remove leading and trailing ( and )
+            while (len(expr_tokens) > 0 and (expr_tokens[0][0] == '(' or expr_tokens[0][0] == ')')):
+                expr_tokens.pop(0)
+                num_tokens_to_skip += 1
+            while (len(expr_tokens) > 0 and (expr_tokens[-1][0] == '(' or expr_tokens[-1][0] == ')')):
+                expr_tokens.pop(-1)
+                num_tokens_to_skip += 1
+
+            if (len(expr_tokens) > 0):
+                result = help_func_expression(grammar, expr_tokens)
+                front_index = back_index + 1
+                i += 1
+                num_tokens_to_skip += 1 + result[1]
+                tree.paste(root_node.identifier, result[0])
+            else:
+                i += 1
+                num_tokens_to_skip += 1
 
         else:
             i += 1
 
     # Iterated through tokens without closing '}'
     raise Exception(errors.ERR_NO_BLOCK_END + " on line " + str(tokens[i-1][2]))
-    return [tree, num_tokens_to_skip]
 
 # checks if the current token should result in:
 # rejection, (0 matches)
@@ -569,9 +657,6 @@ def check_rules(node_rule, tokens, grammar):
         # if that rule can appear after cur_node
         if (is_possible_rule(node_rule, elem, grammar)):
             stack_actual_matches.append(elem)
-
-    '''if (len(stack_actual_matches) == 1):
-        print(stack_actual_matches)'''
 
         # print("accept this line")
         # print("fix handeling of blocks and things in parenthesies. That is why"
