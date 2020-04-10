@@ -91,19 +91,17 @@ def main():
                     # use code_out.write("ASM goes here") to write new code
                     
                     # !! MAIN COMPILER FUNCTIONALITY CALLED HERE !!
-                    code_source = frontend.run_frontend(
+                    code_ir = frontend.run_frontend(
                         code_source,
                         opt_print_scn,  # Command line arg: print scanner out
                         opt_print_prs   # Command line arg: print parser out
                     )
-                    code_source = optimizer.run_optimizer(code_source)
-                    code_source = backend.run_backend(code_source)
+                    code_source = optimizer.run_optimizer(code_ir)
+                    code_source = backend.run_backend(code_ir)
                     # !! END MAIN COMPILER FUNCTIONALITY !!
 
                     # Write compiled file to disk
-                    for line in code_source:
-                        # str() cast for testing at intermediate stages
-                        code_out.write(str(line)) 
+                    code_out.write(str(code_source)) 
 
             except OSError as e:
                 print("OS Error: " + str(e))

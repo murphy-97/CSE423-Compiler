@@ -1,5 +1,5 @@
 # CSE423 Compilers
-# backend.py: frontend systems for C-to-ASM compiler implemented in Python
+# frontend.py: frontend systems for C-to-ASM compiler implemented in Python
 
 # Import non-project modules
 import re
@@ -8,6 +8,7 @@ sys.path.append('treelib-1.5.5/')
 from treelib import Node, Tree
 from collections import OrderedDict
 # Import project modules
+import frontend_ir_build as irb
 import errors
 
 
@@ -35,8 +36,7 @@ def run_frontend(code_lines, print_scn, print_prs):
 
 
     # Convert tree to IR
-    print("HANNAH: Plug in the IR builder so we get meaningful output")
-    ir = ["This", "is", "a", "placeholder"]
+    ir = irb.build_llvm(ast)
     return ir
 
 
