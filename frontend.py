@@ -393,14 +393,10 @@ def help_func_expression(grammar, tokens):
                 if (tokens[i][0] == "("):
                     print("TO DO: Handle parentheses in function calls")
                     break
-                elif (tokens[i][0] == ")"):
-                    break
-                elif (tokens[i][0] == ","):
-                    tokens_skip += 1
-                else:
-                    tokens_skip += 1
-                    param_node = Node(tag=tokens[i][0])
-                    tree.add_node(param_node, parent=param_node)
+                    # param_result = help_func_expression(grammar, tokens[i])
+                    # Evaluate only depth 0 parameters (recursion handles others)
+                    # Remember to add commas to tokens_skip
+                    # Iterate from ( to , to , to ... to , to )
             return [tree, tokens_skip]
         elif (
             (
@@ -578,8 +574,8 @@ def help_func_block(grammar, tokens, root_name="block"):
 
             tree.paste(root_node.identifier, result[0])
 
-        elif (tokens[i][0] == "if"):
-            if_node = Node(tag="if")
+        elif (tokens[i][0] in ["if", "while"]):
+            if_node = Node(tag=tokens[i][0])
             if_cond = Node(tag="condition")
 
             tree.add_node(if_node, parent=root_node)
@@ -592,13 +588,13 @@ def help_func_block(grammar, tokens, root_name="block"):
                 elif (token[0] == '}'):
                     break
             if (first_bracket < 0):
-                raise Exception("if without body '{' on line " + str(tokens[i][2]))
+                raise Exception(tokens[i][0] + " without body '{' on line " + str(tokens[i][2]))
 
             cond_result = help_func_expression(grammar, tokens[i+2:first_bracket-1])
-            body_result = help_func_block(grammar, tokens[first_bracket+1:], root_name="if_body")
+            body_result = help_func_block(grammar, tokens[first_bracket+1:], root_name=tokens[i][0]+"_body")
 
             # Increment i, num_tokens_to_skip, and front_index
-            if_skip = 1    # if
+            if_skip = 1    # if/while
             if_skip += 1   # opening bracket
             if_skip += 2   # parens
             if_skip += cond_result[1]
@@ -610,9 +606,6 @@ def help_func_block(grammar, tokens, root_name="block"):
 
             tree.paste(if_cond.identifier, cond_result[0])
             tree.paste(if_node.identifier, body_result[0])
-
-        elif (tokens[i][0] == "while"):
-            print("TO DO: Special case for 'while'")
 
         elif (tokens[i][0] == "return"):
             result = help_func_return(grammar, tokens[i:])
