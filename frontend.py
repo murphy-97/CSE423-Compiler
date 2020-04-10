@@ -15,23 +15,23 @@ import errors
 # Main method for frontend module
 def run_frontend(code_lines, print_scn, print_prs):
     # Takes a list of code lines and returns a list of processed code lines
-    print('Scanning')
+    print('\nScanning...')
     tokens = run_scanner(code_lines)
     # Command line option to print scanner output
 
     # print_scn = True
     if (print_scn):
-        print("\n====== SCANNER OUTPUT ======")
+        print("====== SCANNER OUTPUT ======")
         for token in tokens:
             print(str(token))
 
-    print('Parsing')
+    print('\nParsing...')
     grammar = parse_grammar(open('grammar.txt', "r"))
     ast = run_parser(tokens, grammar)[0]
 
     # Command line option to print parser output
     if (print_prs):
-        print("\n====== PARSER OUTPUT ======")
+        print("====== PARSER OUTPUT ======")
         ast.show(key=lambda x: x.identifier, line_type='ascii')
 
 
@@ -165,7 +165,6 @@ def run_scanner(code_lines):
             tokens_descriptive.append([token, "return", line_counter])
         elif (token in single_tokens):
             tokens_descriptive.append([token, token, line_counter])
-
         elif (token in [
             "auto", "break", "else", "long", "switch", "case", "register",
             "typedef", "extern", "union", "continue", "for", "signed",
@@ -223,28 +222,25 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
             break
         list_of_tokens.append(tokens[i])    # append token and metadata
 
-        result = check_rules("program", list_of_tokens, grammar) # Verify first parameter is correct
+        result = check_rules("program", list_of_tokens, grammar)
         if (result[0] > 1): #matches more than one possible rule
             continue
         elif (result[0] == 1): #matches one possible rule
             help_fun_tuple = help_func_manager(
                 result,
                 grammar,
-                tokens[i - len(list_of_tokens) + 1:] #may be off by one
+                tokens[i - len(list_of_tokens) + 1:]
             )
             sub_tree = help_fun_tuple[0]
-            num_tokens_to_skip = help_fun_tuple[1]
-            #may or may not need to subtract one from num_tokes_to_skip
-            #print("Hannah: add the sub_tree here to root as a child")
-            tree.paste(root.identifier, sub_tree)
+            num_tokens_to_skip = help_fun_tuple[1] - len(list_of_tokens)
 
-            tree.show(key=lambda x: x.identifier, line_type='ascii')
+            tree.paste(root.identifier, sub_tree)
             #call helper function
             list_of_tokens = []
         elif (result[0] == 0):
             #matches zero rules. parser crash
-            print("RESULT:", result)
-            print("TOKEN LIST:", list_of_tokens)
+            print("ERRONEOUS RESULT:", result)
+            print("ERRONEOUS TOKEN LIST:", list_of_tokens)
             raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
                             "' on line " + str(tokens[i][2]))
 
@@ -375,9 +371,7 @@ def help_func_expression(grammar, tokens):
             tree.add_node(value_node, parent=None)
             return [tree, 1]
         else:
-            print("SOME KIND OF ERROR")
-            print("Tokens:", tokens)
-            raise Exception("Test")
+            raise Exception("Unknown token sequence: " + str(tokens))
 
     # Lowest precedence operator found
     # Lowest precedence operator is root.
@@ -482,9 +476,10 @@ def help_func_funDeclaration(grammar, tokens):
     #parser_out = run_parser(body_tokens, grammar, look_for_brace=True, root_name="func_body") #may be off by one
     block_out = help_func_block(grammar, body_tokens, root_name="func_body")
     body_tree = block_out[0]
+    skip_tokens += block_out[1]
     tree.paste(func_root.identifier, body_tree)
 
-    return [tree, skip_tokens + block_out[1]]
+    return [tree, skip_tokens]
 
 def help_func_block(grammar, tokens, root_name="block"):
 
@@ -512,9 +507,7 @@ def help_func_block(grammar, tokens, root_name="block"):
 
     i = 0
     while (i < len(tokens)):
-        print("i = " + str(i), "token =", tokens[i])
         if (tokens[i][0] == "}"):
-            print("OUTPUT:", tokens[num_tokens_to_skip + 1:])
             return [tree, num_tokens_to_skip + 1]
 
         elif (tokens[i][0] == "{"):
@@ -533,12 +526,6 @@ def help_func_block(grammar, tokens, root_name="block"):
             print("TO DO: Special case for 'while'")
 
         elif (tokens[i][0] == "return"):
-
-            print("RETURN")
-            print("i:", i, tokens[i])
-            print("f:", front_index)
-            print("ft:", tokens[front_index])
-
             result = help_func_return(grammar, tokens[i:])
             front_index += result[1]
             i += result[1]
@@ -548,11 +535,6 @@ def help_func_block(grammar, tokens, root_name="block"):
 
         elif (tokens[i][0] == ";"):
             back_index = i
-
-            print("EXPRESSION")
-            print("f:", front_index, tokens[front_index])
-            print("b:", back_index, tokens[back_index])
-
             result = help_func_expression(grammar, tokens[front_index:back_index])
             front_index = back_index + 1
             i += 1
@@ -565,33 +547,6 @@ def help_func_block(grammar, tokens, root_name="block"):
     # Iterated through tokens without closing '}'
     raise Exception(errors.ERR_NO_BLOCK_END + " on line " + str(tokens[i-1][2]))
     return [tree, num_tokens_to_skip]
-
-    # for i in range(0, len(tokens)):
-    #     if (num_tokens_to_skip > 0):
-    #         num_tokens_to_skip -= 1
-    #         continue
-    #     list_of_tokens.append(tokens[i])
-
-    #     result = check_rules(tokens[i][1], list_of_tokens, grammar)
-    #     if (result[0] > 1): #matches more than one possible rule
-    #         continue
-    #     elif (result[0] == 1): #matches one possible rule
-    #         help_fun_tuple = help_func_manager(
-    #             result,
-    #             grammar,
-    #             tokens[i - len(list_of_tokens):-1] #may be off by one
-    #         )
-    #         sub_tree = help_fun_tuple[0]
-    #         num_tokens_to_skip = help_fun_tuple[1]
-    #         #may or may not need to subtract one from num_tokes_to_skip
-    #         #print("Hannah: add the sub_tree here to root as a child")
-    #         tree.paste(root.identifier, sub_tree)
-    #         #call helper function
-    #         list_of_tokens = []
-    #     elif (result[0] == 0):
-    #         #matches zero rules. parser crash
-    #         raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
-    #                         "' on line " + str(tokens[i][2]))
 
 # checks if the current token should result in:
 # rejection, (0 matches)

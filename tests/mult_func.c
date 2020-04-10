@@ -5,5 +5,5 @@ int main(void)
 
 int func_dec(int input)
 {
-  return 1;
+  return input * 10;
 }
