@@ -14,7 +14,7 @@ import errors
 
 
 # Main method for frontend module
-def run_frontend(code_lines, print_scn, print_prs):
+def run_frontend(code_lines, print_scn, print_prs, print_ir):
     # Takes a list of code lines and returns a list of processed code lines
     print('\nScanning...')
     tokens = scn.run_scanner(code_lines)
@@ -32,10 +32,16 @@ def run_frontend(code_lines, print_scn, print_prs):
 
     # Command line option to print parser output
     if (print_prs):
-        print("====== PARSER OUTPUT ======")
+        print("====== PARSER OUTPUT =======")
         ast.show(key=lambda x: x.identifier, line_type='ascii')
 
-
     # Convert tree to IR
+    print("\nBuilding IR...")
     ir = irb.build_llvm(ast)
+    if (print_ir):
+        print("====== IR OUTPUT ===========")
+        print(ir)
+
+    # Command line option to print IR output
+
     return ir

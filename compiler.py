@@ -31,6 +31,7 @@ def main():
     # Command line options/arguments
     opt_print_scn = False   # Print scanner output in run_frontend()
     opt_print_prs = False   # Print parser output in run_frontend()
+    opt_print_ir = False    # Print IR output in run_frontend()
 
     try:
         # Omit first argument (module name) by list slice
@@ -43,7 +44,8 @@ def main():
                 "o_file=",      # Specify output file
                 # Print statement options
                 "p-scn",        # Print scanner output
-                "p-prs"         # Print parser output
+                "p-prs",        # Print parser output
+                "p-ir"          # Print IR output
             ]
         )
     except getopt.GetoptError:
@@ -66,6 +68,9 @@ def main():
 
         elif opt == '--p-prs':
             opt_print_prs = True
+
+        elif opt == '--p-ir':
+            opt_print_ir = True
 
     # Require input file
     if not i_file:
@@ -94,7 +99,8 @@ def main():
                     code_ir = frontend.run_frontend(
                         code_source,
                         opt_print_scn,  # Command line arg: print scanner out
-                        opt_print_prs   # Command line arg: print parser out
+                        opt_print_prs,  # Command line arg: print parser out
+                        opt_print_ir    # Command line arg: print IR out
                     )
                     code_source = optimizer.run_optimizer(code_ir)
                     code_source = backend.run_backend(code_ir)
@@ -125,7 +131,8 @@ def usage():
         " -o       Output file. Requires argument 'output-file'\n" +
         " -h       Prints usage statement\n" +
         " --p-scn  Prints scanner output\n" +
-        " --p-prs  Prints parser output\n"
+        " --p-prs  Prints parser output\n" +
+        " --p-ir   Prints IR output"
     )
 
     print("If no ouptut file is specified, output written is to 'input-file'.ASM")
