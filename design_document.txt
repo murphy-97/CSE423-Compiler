@@ -67,6 +67,19 @@ PARSER:
     ++ --: incomplete
     variable declaration: incomplete
     function calling: incomplete
-    
+  
+  IR:
+    Function parsing: complete
+    while statements: complete
+    blocks declared in functions: incomplete
+    if statements: complete
+    return statemnts: complete
+    fuction prototypes: incomplete 
+    else statement: incomplete
+    for statments: incomplete
+    ++ --: complete
+    variable declaration: incomplete
+    function calling: incomplete
+
   MISC:
     comments: complete
