@@ -298,6 +298,23 @@ def build_llvm(ast):
                         child_id = ast.children(iter_node.identifier)[0].identifier
                         result = node_results[child_id]
                         builder.ret(result)
+                
+                elif (iter_node.tag == 'condition'):
+                    print("TO DO: Handle if-statement")
+                    # Expression result is stored in the single child
+                
+                elif (iter_node.tag == 'condition_body'):
+                    print("TO DO: Handle if-statement")
+                    # Create a block in which contents are the children in linear order
+                
+                elif (iter_node.tag == 'if'):
+                    print("TO DO: Handle if-statement")
+                    # condition is first child, body is second child
+                
+                elif (iter_node.tag == 'while'):
+                    print("TO DO: Handle while-statement")
+                    # condition is first child, body is second child
+
                 else:
                     # Node is either a constant, variable ID, or function call
                     if (iter_node.tag in ir_funcs):

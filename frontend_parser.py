@@ -389,7 +389,7 @@ def help_func_block(grammar, tokens, root_name="block"):
                 raise Exception(tokens[i][0] + " without body '{' on line " + str(tokens[i][2]))
 
             cond_result = help_func_expression(grammar, tokens[i+2:first_bracket-1])
-            body_result = help_func_block(grammar, tokens[first_bracket+1:], root_name=tokens[i][0]+"_body")
+            body_result = help_func_block(grammar, tokens[first_bracket+1:], "condition_body")
 
             # Increment i, num_tokens_to_skip, and front_index
             if_skip = 1    # if/while

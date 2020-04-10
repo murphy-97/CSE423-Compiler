@@ -37,6 +37,5 @@ def run_frontend(code_lines, print_scn, print_prs):
 
 
     # Convert tree to IR
-    #ir = irb.build_llvm(ast)
-    ir = "Placeholder for the IR"
+    ir = irb.build_llvm(ast)
     return ir
