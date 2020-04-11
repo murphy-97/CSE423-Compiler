@@ -1,6 +1,13 @@
 # CSE423 Compilers
 # front_ir_build.py: Builds LLVM from an AST
 
+    '''
+    TO DO:
+    - Test unary operations (requires parser progress)
+    - Constant types other than int or float?
+    - Global variables?
+    '''
+
 # Import non-project modules
 from treelib import Node, Tree
 from llvmlite import ir
@@ -130,14 +137,6 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
     while (len(node_stack) > 0):
 
         iter_node = node_stack.pop()
-
-        '''
-        TO DO:
-        - Test unary operations
-        - Constant types other than int or float?
-        - Global variables?
-        - Nested blocks inside functions
-        '''
 
         if (iter_node.tag in bin_ops):
             build_bin_op(
