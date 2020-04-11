@@ -236,6 +236,8 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
         elif (iter_node.tag == 'block'):
 
             body_node = iter_node
+            # Change name to prevent infinite recursion
+            body_node.tag = 'block_root'
 
             # Build scope for the if-statement sub-blocks
             scope_vars = {}
@@ -262,7 +264,7 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
 
         else:
             # Node is either a constant, variable ID, or function call
-            if (iter_node.tag in ['func_body', 'condition', 'condition_body']):
+            if (iter_node.tag in ['func_body', 'condition', 'condition_body', 'block_root']):
             # First node in subtree is just for finding the children
             # Can be ignored in function building
                 pass
