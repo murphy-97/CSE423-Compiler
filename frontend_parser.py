@@ -28,6 +28,7 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
         if (result[0] > 1): #matches more than one possible rule
             continue
         elif (result[0] == 1): #matches one possible rule
+            # print("Matches rule: ", result[1], ": w/: ", list_of_tokens)
             help_fun_tuple = help_func_manager(
                 result,
                 grammar,
@@ -350,16 +351,18 @@ def help_func_block(grammar, tokens, root_name="block"):
     #grab up to till first ;
         #call expression handeler on that sub list
         #returns a tree which is appended
+    # print("Called block with toekens: ", tokens)
 
     tree = Tree()
     root_node = Node(tag=root_name)
     tree.add_node(root_node, parent=None)
 
-    func_flag_no_init = 0
-    func_flag_init = 0
-    func_flag = 0
     front_index = 0
     num_tokens_to_skip = 0
+    func_flag_no_init = 0
+    func_flag = 0
+    fcall_flag = 0
+    tmpstr = " "
 
     i = 0
     while (i < len(tokens)):
@@ -417,19 +420,57 @@ def help_func_block(grammar, tokens, root_name="block"):
             tree.paste(root_node.identifier, result[0])
 
         elif (tokens[i][0] == ";"):
+            # print(tokens, "\n")
             back_index = i
 
             expr_tokens = tokens[front_index:back_index]
-
+            # print(expr_tokens)
             # Remove leading and trailing ( and )
             while (len(expr_tokens) > 0 and (expr_tokens[0][0] == '(' or expr_tokens[0][0] == ')')):
                 expr_tokens.pop(0)
                 num_tokens_to_skip += 1
             while (len(expr_tokens) > 0 and (expr_tokens[-1][0] == '(' or expr_tokens[-1][0] == ')')):
+                if (len(expr_tokens) == 3 and expr_tokens[0][1] == "ID" and expr_tokens[1][1] == "(" and expr_tokens[2][1] == ")"):
+                    # print("This works")
+                    break
                 expr_tokens.pop(-1)
                 num_tokens_to_skip += 1
+            # print(expr_tokens, "\n")
 
             if (len(expr_tokens) > 0):
+                # print(expr_tokens)
+                if (len(expr_tokens) >= 2 and expr_tokens[0][1] == 'ID' and expr_tokens[1][1] == '('):
+                    # print("This is a function call: ", expr_tokens)
+                    tmp_tree_fcall = Tree()
+                    tmp_tree_fcall_root = Node(tag="func:" + expr_tokens[0][0])
+                    tmp_tree_fcall.add_node(tmp_tree_fcall_root, parent=None)
+                    # tmp_tree.add_node(Node(tag=var_name), parent=tmp_tree_root)
+                    fcall_flag = 1
+                    end_range = i - 1;
+                    print("end_range token:, ", tokens[end_range])
+                    for j in range(len(tokens) - 1, 0, -1):
+                        if (tokens[j][0] == "("):
+                            break
+                    start_range = j
+                    print("start and end: ", start_range, " ", end_range)
+                    # print("params: ", [token[0] for token in tokens[start_range+1:end_range]])
+                    comma_list = []
+                    params_list = [token[0] for token in tokens[start_range+1:end_range]]
+                    list_length = len(params_list)
+                    for j in range(0, len(params_list)):
+                        if (params_list[j] == ","):
+                            comma_list.append(j)
+                    params_list = " ".join(params_list)
+                    params_list = params_list.split(",")
+                    for j in range(0, len(params_list)):
+                        params_list[j] = " ".join(params_list[j].split())
+                    params_list = [i for i in params_list if i]
+                    # params_list = tokens[start_range+1:end_range]
+
+                    print(params_list)
+                    print("comma_list: ", comma_list)
+                    # print(tokens)
+
                 if (len(expr_tokens) == 2 and expr_tokens[0][1] == 'typeSpecifier' and expr_tokens[1][1] == 'ID'):
                     func_flag = 1
                     func_flag_no_init = 1
@@ -449,22 +490,63 @@ def help_func_block(grammar, tokens, root_name="block"):
                     tmp_tree.add_node(tmp_tree_root, parent=None)
                     tmp_tree.add_node(Node(tag=var_name), parent=tmp_tree_root)
 
-                result = help_func_expression(grammar, expr_tokens)
-                
+                if (fcall_flag != 1):
+                    result = help_func_expression(grammar, expr_tokens)
+                if (fcall_flag == 1):
+                    # pass
+                    # result[1] = 3
+                    prev_index = 0
+                    tmpdigit = 0
+                    if (len(params_list) > 1): #has > 1 param
+                        # print("has > 1 parameter")
+                        for elem in comma_list:
+                            # print("start, end: ", prev_index+2, ", ", elem+1)
+                            # print("param: ", tokens[prev_index+2:elem+2])
+                            result = help_func_expression(grammar, tokens[prev_index+2:elem+2])
+                            tmp_tree_fcall.paste(tmp_tree_fcall_root.identifier, result[0])
+                            # tmpdigit += result[1]
+                            prev_index = elem + 1
+                        # print("start, end: ", comma_list[len(comma_list)-1]+3, ", ", list_length+2)
+                        # print("param: ", tokens[comma_list[len(comma_list)-1]+3:list_length+2])
+                        result = help_func_expression(grammar, tokens[comma_list[len(comma_list)-1]+3:list_length+2])
+                        # print("result[1]: ", result[1])
+                        tmp_tree_fcall.paste(tmp_tree_fcall_root.identifier, result[0])
+                        result[1] = list_length + 3
+                    elif (len(params_list) == 1): #has 1 param
+                        # print("has 1 parameter")
+                        # print("s, e: ", start_range + 1, ", ", end_range - 1)
+                        # print("param: ", tokens[start_range + 1:end_range])
+                        result = help_func_expression(grammar, tokens[start_range + 1:end_range])
+                        tmp_tree_fcall.paste(tmp_tree_fcall_root.identifier, result[0])
+                        result[1] += 3
+                    else:
+                        print(expr_tokens)
+                        # print("has no parameters")
+                        result = help_func_expression(grammar, expr_tokens)
+                    # print("params list: ", params_list)
+
                 if (func_flag == 1):
                     result[1] += 1
+
                 front_index = back_index + 1
                 i += 1
                 num_tokens_to_skip += 1 + result[1]
-                if (func_flag_no_init != 1):
-                    tree.paste(root_node.identifier, result[0])
-                if (func_flag == 1):
-                    # pass
+                if (func_flag_no_init == 1):
                     tree.paste(root_node.identifier, tmp_tree)
+                elif (func_flag == 1):
+                    tree.paste(root_node.identifier, tmp_tree)
+                    tree.paste(root_node.identifier, result[0])
+                elif (fcall_flag == 1):
+                    tree.paste(root_node.identifier, tmp_tree_fcall)
+                elif (func_flag_no_init == 0 and func_flag == 0 and fcall_flag == 0):
+                    tree.paste(root_node.identifier, result[0])
                 func_flag_no_init = 0
-                func_flag_init = 0
                 func_flag = 0
+                fcall_flag = 0
                 tmp_tree = None
+                tmp_tree_fcall = None
+                start_range = 0
+                end_range = 0
 
         else:
             i += 1
