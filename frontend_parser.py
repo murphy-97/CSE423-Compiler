@@ -427,14 +427,41 @@ def help_func_block(grammar, tokens, root_name="block"):
                 num_tokens_to_skip += 1
 
             if (len(expr_tokens) > 0):
+                if (len(expr_tokens) == 2 and expr_tokens[0][1] == 'typeSpecifier' and expr_tokens[1][1] == 'ID'):
+                    func_flag = 1
+                    func_flag_no_init = 1
+                    # print("This is a variable declaration with no intilization")
+                    var_type = expr_tokens[0][0]
+                    var_name = expr_tokens[1][0]
+                    expr_tokens.pop(0)
+                elif (len(expr_tokens) > 2 and expr_tokens[0][1] == 'typeSpecifier' and expr_tokens[1][1] == 'ID' and expr_tokens[2][1] == '='):
+                    func_flag = 1
+                    # print("This is a variable declaration with intilization")
+                    var_type = expr_tokens[0][0]
+                    var_name = expr_tokens[1][0]
+                    expr_tokens.pop(0)
+                if (func_flag == 1):
+                    tmp_tree = Tree()
+                    tmp_tree_root = Node(tag=var_type)
+                    tmp_tree.add_node(tmp_tree_root, parent=None)
+                    tmp_tree.add_node(Node(tag=var_name), parent=tmp_tree_root)
+
                 result = help_func_expression(grammar, expr_tokens)
+                
+                if (func_flag == 1):
+                    result[1] += 1
                 front_index = back_index + 1
                 i += 1
                 num_tokens_to_skip += 1 + result[1]
-                tree.paste(root_node.identifier, result[0])
-            else:
-                i += 1
-                num_tokens_to_skip += 1
+                if (func_flag_no_init != 1):
+                    tree.paste(root_node.identifier, result[0])
+                if (func_flag == 1):
+                    # pass
+                    tree.paste(root_node.identifier, tmp_tree)
+                func_flag_no_init = 0
+                func_flag_init = 0
+                func_flag = 0
+                tmp_tree = None
 
         else:
             i += 1

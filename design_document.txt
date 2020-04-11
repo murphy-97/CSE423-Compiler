@@ -49,3 +49,37 @@ PARSER:
   index tree from the tokens using a grammar. Once it matches a sublist of tokens
   to a grammar rule, it will either take that token and put it into the tree, or
   it will recursively parse the body of the sublist.
+  
+  === WHAT IS/IS NOT IMPLEMENTED ===============================================
+  
+  SCANNER:
+    complete
+    
+  PARSER:
+    Function parsing: complete
+    while statements: complete
+    blocks declared in functions: complete
+    if statements: complete
+    return statemnts: complete
+    fuction prototypes: incomplete 
+    else statement: incomplete
+    for statments: incomplete
+    ++ --: incomplete
+    variable declaration: complete
+    function calling: incomplete
+  
+  IR:
+    Function parsing: complete
+    while statements: complete
+    blocks declared in functions: incomplete
+    if statements: complete
+    return statemnts: complete
+    fuction prototypes: incomplete 
+    else statement: incomplete
+    for statments: incomplete
+    ++ --: complete
+    variable declaration: incomplete
+    function calling: incomplete
+
+  MISC:
+    comments: complete
