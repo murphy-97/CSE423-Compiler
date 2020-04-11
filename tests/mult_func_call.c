@@ -1,10 +1,14 @@
-int main(void)
+int func_dec(int a)
 {
-  x = func_dec(2);
-  return 0;
+  a = a + 2;
+  return a;
 }
 
-int func_dec(int input)
+int main(void)
 {
-  return a;
+  int x;
+  int y;
+  y = 3;
+  x = func_dec(y);
+  return 0;
 }

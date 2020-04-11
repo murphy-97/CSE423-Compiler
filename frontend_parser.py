@@ -182,19 +182,59 @@ def help_func_expression(grammar, tokens):
         if (len(tokens) > 1 and tokens[0][1] == "ID" and tokens[1][1] == "("):
             # Create node with function name
             tree = Tree()
-            call_node = Node(tag=tokens[0][0])
+            call_node = Node(tag="func:"+tokens[0][0])
             tree.add_node(call_node, parent=None)
             tokens_skip += 3
 
             # Children of node are function parameters
+            # Iterate through tokens to find each parameter
+            # Parameters split on ',' with depth=0
+            depth = 0
+            token_depth = []
+            end_point = -1
+
+            # print("TOKENS:", tokens)
+
             for i in range(2, len(tokens)):
+
                 if (tokens[i][0] == "("):
-                    print("TO DO: Handle parentheses in function calls")
+                    depth += 1
+                elif (tokens[i][0] == ")"):
+                    depth -= 1
+                
+                token_depth.append(depth)
+
+                if (depth < 0):
+                    # End ) found
+                    end_point = i
                     break
-                    # param_result = help_func_expression(grammar, tokens[i])
-                    # Evaluate only depth 0 parameters (recursion handles others)
-                    # Remember to add commas to tokens_skip
-                    # Iterate from ( to , to , to ... to , to )
+
+            if (end_point < 0):
+                end_point = len(tokens)
+                #raise Exception("No ending ')' for function call '" +
+                #    tokens[0][0] + "'")
+
+            # Find split points for the expressions
+            split_points = [2]
+            for i in range(len(token_depth)):
+                if (token_depth[i] == 0 and tokens[i+2][0] == ','):
+                    split_points.append(i+3)
+            
+            split_points.append(end_point)
+
+            func_params = []
+            for i in range(len(split_points)-1):
+                func_params.append(tokens[split_points[i]:split_points[i+1]])
+
+            # Add parameters to tree
+            for p in func_params:
+                print("Parameter:", p)
+                # Needs to call expression handler to evaluate parameters
+                # - Currently, operators in function calls are lower prec than the function for some reason
+                # - Exceptions caused by nesting function calls
+                param_node = Node(tag=p[0][0])
+                tree.add_node(param_node, parent=call_node)
+
             return [tree, tokens_skip]
         elif (
             (

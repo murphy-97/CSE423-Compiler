@@ -272,13 +272,14 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
             # First node in subtree is just for finding the children
             # Can be ignored in function building
                 pass
-            elif (iter_node.tag in __ir_funcs):
+            elif (iter_node.tag[:5] == "func:"):
                 # Function call
+                func_name = iter_node.tag[5:]
                 arg_list = []
                 for child in ast.children(iter_node.identifier):
                     arg_list.append(__node_results[child.identifier])
 
-                builder.call(__ir_funcs[iter_node.tag], arg_list)
+                builder.call(__ir_funcs[func_name], arg_list)
             
             elif (iter_node.tag in __type_dict):
                 # Explicit variable declaration

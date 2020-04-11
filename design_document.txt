@@ -77,11 +77,17 @@ IR BUILDER:
     return statemnts:               complete
     variable declaration:           complete
 
+    function calling:               partial
+                                    - Supported if the function call is a single
+                                      value, either a variable or constant
+                                    - Not yet supported for multiple parameters,
+                                      expressions as parameters, or function
+                                      calls as parameters 
+
     fuction prototypes:             incomplete 
     else statement:                 incomplete
     for statments:                  incomplete
     ++ --:                          incomplete
-    function calling:               incomplete
   
   IR:
     Function parsing:               complete
