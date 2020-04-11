@@ -1,27 +1,27 @@
 # CSE423 Compilers
 # front_ir_build.py: Builds LLVM from an AST
 
-    '''
-    TO DO:
-    - Test unary operations (requires parser progress)
-    - Constant types other than int or float?
-    - Global variables?
-    '''
+'''
+TO DO:
+- Test unary operations (requires parser progress)
+- Constant types other than int or float?
+- Global variables?
+'''
 
 # Import non-project modules
 from treelib import Node, Tree
 from llvmlite import ir
 
 __module = None
-__ir_funcs = {}       # Stores function objects for use when calling functions
-__node_results = {}   # Used to keep track of IR results by node ID (intermediate steps)
-__variable_counter = 0
-__block_counter = 0
-__var_nodes = {}
+__ir_funcs = {}         # Stores function objects for use when calling functions
+__node_results = {}     # Used to keep track of IR results by node ID (intermediate steps)
+__variable_counter = 0  # Guarantees that variables have globally-unique names
+__block_counter = 0     # Guarantees that blocks have globally-unique names
+__var_nodes = {}        # Used to store which nodes have declared variables
 
 # Type dictionary used in parsing the AST
 __type_dict = {
-    "int":    ir.IntType(8),        # Assuming 8 bit ints for now
+    "int":    ir.IntType(32),   # Assuming 4 byte ints for now
     "float": ir.DoubleType(),
     "double": ir.DoubleType(),
     "void":   ir.VoidType()
