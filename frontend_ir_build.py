@@ -483,14 +483,27 @@ def set_variable(value, var_name, func_locals, func_params, function, builder, g
         operand = func_locals[var_name]
     elif (var_name in [p[1] for p in func_params]):
         # 2nd check: arguments in this scope that have not been modified
-        operand = function.args[
+        arg = function.args[
             [p[1] for p in func_params].index(var_name)
         ]
+        # args can't be modified via store. Need to create variable
+        var_index = [p[1] for p in func_params].index(var_name)
+        # var_type is already converted from __type_dict
+        var_type = [p[0] for p in func_params][var_index]
+        
+        assert(__module is not None)
+        func_locals[var_name] = ir.GlobalVariable(
+            __module,
+            var_type,
+            var_name + "_" + str(__variable_counter)
+        )
+        __variable_counter += 1
+        operand = func_locals[var_name]
+
     elif (var_name in global_vars):
         # 3rd check: variables from the above scopes
         operand = global_vars[var_name]
     else:
-        # raise Exception("IR Builder Unknown Variable: " + var_name)
         print("WARNING! Implicit declaration of variable '" + var_name + "' (set_variable)")
 
         print("Assuming type is int")
