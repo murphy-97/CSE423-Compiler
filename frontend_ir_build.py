@@ -132,8 +132,6 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
         '''
         TO DO:
         - Test unary operations
-        - Flow control (if, while)
-        - Test variable assignment (=)
         - Constant types other than int or float?
         - Global variables?
         - Nested blocks inside functions
