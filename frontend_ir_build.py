@@ -5,8 +5,11 @@
 from treelib import Node, Tree
 from llvmlite import ir
 
+__module = None
 __ir_funcs = {}       # Stores function objects for use when calling functions
 __node_results = {}   # Used to keep track of IR results by node ID (intermediate steps)
+__variable_counter = 0
+__var_nodes = {}
 
 # Type dictionary used in parsing the AST
 __type_dict = {
@@ -19,11 +22,12 @@ __type_dict = {
 # Iterative function to build LLVM representation
 def build_llvm(ast):
 
+    global __module
+    if (__module is None):
+        __module = ir.Module(name="program")
+
     assert(ast.get_node(ast.root).tag == "program")
     global_vars = {}    # Stores global variable objects
-
-    # Create module
-    module = ir.Module(name="program")  # Module object stores all program data
 
     # Iterate through children of root
     for node in ast.children(ast.root):
@@ -74,7 +78,7 @@ def build_llvm(ast):
                 tuple([p[0] for p in func_params])  # Tuple of param types
             )
 
-            function = ir.Function(module, func_type, name=func_name)
+            function = ir.Function(__module, func_type, name=func_name)
             __ir_funcs[func_name] = function          # Store function object by name
 
             # Build function
@@ -86,7 +90,7 @@ def build_llvm(ast):
             print("Handle case for global variables")
 
     # Return LLVM module
-    return module
+    return __module
 
 def build_block(ast, block_root, global_vars, func_params, function, builder):
     # Bulider is passed in by caller. Caller creates block object and builder
@@ -192,7 +196,7 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
 
             # Build if-then using helper
             body_node = ast.children(iter_node.identifier)[1]
-            with builder.if_then(cond_result):
+            with builder.if_then(cond_result) as endblock:
                 build_block(
                     ast,
                     body_node,
@@ -210,6 +214,9 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
                         ir.Constant(__type_dict["int"], 0)
                     )
                     builder.cbranch(cond_result, builder.block, endblock) 
+
+        elif (iter_node.tag == 'block'):
+            print("TO DO: Handle case for standalone block")
 
         else:
             # Node is either a constant, variable ID, or function call
@@ -263,8 +270,10 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
                             func_locals,
                             func_params,
                             function,
-                            global_vars
+                            builder,
+                            global_vars,
                         )
+                        __var_nodes[iter_node.identifier] = result
 
                     else:
                         # Function argument
@@ -284,6 +293,9 @@ def build_bin_op(ast, iter_node, func_locals, global_vars, func_params, function
     # Get IR representations of operand nodes
     operand_l = __node_results[child_l]
     operand_r = __node_results[child_r]
+    # Convert variable address to variable value
+    if (child_r in __var_nodes):
+        operand_r = builder.load(operand_r)
 
     result = None
 
@@ -301,7 +313,8 @@ def build_bin_op(ast, iter_node, func_locals, global_vars, func_params, function
                 func_locals,
                 func_params,
                 function,
-                global_vars
+                builder,
+                global_vars,
             )
 
             # Evaluate right side operand
@@ -320,74 +333,62 @@ def build_bin_op(ast, iter_node, func_locals, global_vars, func_params, function
             elif (iter_node.tag == '%='):
                 operand_r = builder.frem(operand_l, operand_r)
 
-        # Assign new value where appropriate
-        if (var_name in func_locals):
-            # Assigning new value to existing local variable
-            func_locals[var_name] = operand_r
+        # Assign new value
+        result = set_variable(operand_r, var_name, func_locals, func_params, function, builder, global_vars)
 
-        elif (var_name in [p[1] for p in func_params]):
-            # Assigning new value to function parameter
-            # Create "copy" of parameter as local variable
-            func_locals[var_name] = operand_r
+    else:
+        # Convert variable address to variable value
+        if (child_l in __var_nodes):
+            operand_l = builder.load(operand_l)
 
-        else:
-            # Defining new local variable
-            func_locals[var_name] = operand_r
+        if (iter_node.tag == '+'):
+            result = builder.fadd(operand_l, operand_r)
 
-        if (var_name in global_vars):
-            global_vars[var_name] = operand_r
+        elif (iter_node.tag == '-'):
+            result = builder.fsub(operand_l, operand_r)
 
-        # "Result" of the assignment is the new value
-        result = operand_r
+        elif (iter_node.tag == '*'):
+            result = builder.fmul(operand_l, operand_r)
 
-    elif (iter_node.tag == '+'):
-        result = builder.fadd(operand_l, operand_r)
+        elif (iter_node.tag == '/'):
+            result = builder.fdiv(operand_l, operand_r)
 
-    elif (iter_node.tag == '-'):
-        result = builder.fsub(operand_l, operand_r)
+        elif (iter_node.tag == '%'):
+            result = builder.frem(operand_l, operand_r)
 
-    elif (iter_node.tag == '*'):
-        result = builder.fmul(operand_l, operand_r)
+        elif (iter_node.tag == '&&'):
+            # Must be implmemented using other operators
+            # (x && y) is equivialent to ((x * y) != 0)
+            step_1 = builder.fmul(operand_l, operand_r)
+            step_2 = ir.Constant(__type_dict["int"], 0)
+            result = builder.icmp_signed('!=', step_1, step_2)
+            result = builder.zext(result, __type_dict["int"])
 
-    elif (iter_node.tag == '/'):
-        result = builder.fdiv(operand_l, operand_r)
+        elif (iter_node.tag == '||'):
+            # Must be implmemented using other operators
+            # (x || y) is equivialent to ((x + y)+(x * y) != 0)
+            step_1 = builder.fadd(operand_l, operand_r)
+            step_2 = builder.fmul(operand_l, operand_r)
+            step_3 = builder.fadd(step_1, step_2)
+            step_4 = ir.Constant(__type_dict["int"], 0)
+            result = builder.icmp_signed('!=', step_3, step_4)
+            result = builder.zext(result, __type_dict["int"])
 
-    elif (iter_node.tag == '%'):
-        result = builder.frem(operand_l, operand_r)
+        elif (iter_node.tag in ['<', '>', '<=', '>=', '==', '!=']):
+            result = builder.icmp_signed(iter_node.tag, operand_l, operand_r)
+            # This is the signed comparison.
+            # There's also an unsigned comparison if we care about that
 
-    elif (iter_node.tag == '&&'):
-        # Must be implmemented using other operators
-        # (x && y) is equivialent to ((x * y) != 0)
-        step_1 = builder.fmul(operand_l, operand_r)
-        step_2 = ir.Constant(__type_dict["int"], 0)
-        result = builder.icmp_signed('!=', step_1, step_2)
-        result = builder.zext(result, __type_dict["int"])
+        elif (iter_node.tag == '<<'):
+            result = builder.shl(operand_l, operand_r)
 
-    elif (iter_node.tag == '||'):
-        # Must be implmemented using other operators
-        # (x || y) is equivialent to ((x + y)+(x * y) != 0)
-        step_1 = builder.fadd(operand_l, operand_r)
-        step_2 = builder.fmul(operand_l, operand_r)
-        step_3 = builder.fadd(step_1, step_2)
-        step_4 = ir.Constant(__type_dict["int"], 0)
-        result = builder.icmp_signed('!=', step_3, step_4)
-        result = builder.zext(result, __type_dict["int"])
+        elif (iter_node.tag == '>>'):
+            # Using arithmetic right shift (C/C++ norm) instead of logical shift
+            result = builder.ashr(operand_l, operand_r)
 
-    elif (iter_node.tag in ['<', '>', '<=', '>=', '==', '!=']):
-        result = builder.icmp_signed(iter_node.tag, operand_l, operand_r)
-        # This is the signed comparison.
-        # There's also an unsigned comparison if we care about that
-
-    elif (iter_node.tag == '<<'):
-        result = builder.shl(operand_l, operand_r)
-
-    elif (iter_node.tag == '>>'):
-        # Using arithmetic right shift (C/C++ norm) instead of logical shift
-        result = builder.ashr(operand_l, operand_r)
-
-    if (result is None):
-        # Verify that one of the above cases was satisfied
-        raise Exception("Result not set for binary operator '" + iter_node.tag + "'")
+        if (result is None):
+            # Verify that one of the above cases was satisfied
+            raise Exception("Result not set for binary operator '" + iter_node.tag + "'")
 
     __node_results[iter_node.identifier] = result # Store IR result
 
@@ -403,6 +404,7 @@ def build_una_op(ast, iter_node, func_locals, global_vars, func_params, function
         func_locals,
         func_params,
         function,
+        builder,
         global_vars
     )
 
@@ -425,28 +427,15 @@ def build_una_op(ast, iter_node, func_locals, global_vars, func_params, function
             )
 
         assert(result is not None)
-
-        # Assign new value where appropriate
-        if (var_name in func_locals):
-            # Assigning new value to existing local variable
-            func_locals[var_name] = operand_r
-
-        elif (var_name in [p[1] for p in func_params]):
-            # Assigning new value to function parameter
-            # Create "copy" of parameter as local variable
-            func_locals[var_name] = operand_r
-
-        else:
-            # Defining new local variable
-            func_locals[var_name] = operand_r
-
-        if (var_name in global_vars):
-            global_vars[var_name] = operand_r
+        # Assign new value
+        result = set_variable(result, var_name, func_locals, func_params, function, builder, global_vars)
 
     assert(result is not None)  # Verify that one of the above cases was satisfied
     __node_results[iter_node.identifier] = result # Store IR result
 
-def get_variable(var_name, func_locals, func_params, function, global_vars):
+def set_variable(value, var_name, func_locals, func_params, function, builder, global_vars):    
+    global __variable_counter
+
     if (var_name in func_locals):
         # 1st check: local vars and modified arguments in this scope
         operand = func_locals[var_name]
@@ -460,9 +449,52 @@ def get_variable(var_name, func_locals, func_params, function, global_vars):
         operand = global_vars[var_name]
     else:
         # raise Exception("IR Builder Unknown Variable: " + var_name)
-        print("WARNING! Implicit declaration of variable '" + var_name + "'")
-        func_locals[var_name] = get_constant('0')   # Initialize to 0
+        print("WARNING! Implicit declaration of variable '" + var_name + "' (set_variable)")
+
+        print("Assuming type is int")
+        var_type = "int"
+        
+        assert(__module is not None)
+        func_locals[var_name] = ir.GlobalVariable(
+            __module,
+            __type_dict[var_type],
+            var_name + "_" + str(__variable_counter)
+        )
+        __variable_counter += 1
         operand = func_locals[var_name]
+
+    return builder.store(value, operand)
+
+def get_variable(var_name, func_locals, func_params, function, builder, global_vars):    
+    global __variable_counter
+
+    if (var_name in func_locals):
+        # 1st check: local vars and modified arguments in this scope
+        operand = func_locals[var_name]
+    elif (var_name in [p[1] for p in func_params]):
+        # 2nd check: arguments in this scope that have not been modified
+        operand = function.args[
+            [p[1] for p in func_params].index(var_name)
+        ]
+    elif (var_name in global_vars):
+        # 3rd check: variables from the above scopes
+        operand = global_vars[var_name]
+    else:
+        # raise Exception("IR Builder Unknown Variable: " + var_name)
+        print("WARNING! Implicit declaration of variable '" + var_name + "' (get_variable)")
+
+        print("Assuming type is int")
+        var_type = "int"
+
+        assert(__module is not None)
+        func_locals[var_name] = ir.GlobalVariable(
+            __module,
+            __type_dict[var_type],
+            var_name + "_" + str(__variable_counter)
+        )
+        __variable_counter += 1
+        operand = func_locals[var_name]
+
     return operand
 
 def get_constant(var_value, var_type=None):
