@@ -9,6 +9,7 @@ __module = None
 __ir_funcs = {}       # Stores function objects for use when calling functions
 __node_results = {}   # Used to keep track of IR results by node ID (intermediate steps)
 __variable_counter = 0
+__block_counter = 0
 __var_nodes = {}
 
 # Type dictionary used in parsing the AST
@@ -94,6 +95,7 @@ def build_llvm(ast):
 
 def build_block(ast, block_root, global_vars, func_params, function, builder):
     # Bulider is passed in by caller. Caller creates block object and builder
+    global __block_counter
 
     traversal_stack = []    # Used to traverse tree build node_stack (excludes subblocks)
     node_stack = []         # Used to build function. Nodes pushed in level order, popped in reverse level order
@@ -172,7 +174,9 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
 
         elif (iter_node.tag in ['if', 'while']):
             # condition is first child, body is second child
-            
+            cond_node = ast.children(iter_node.identifier)[0]
+            body_node = ast.children(iter_node.identifier)[1]
+
             # Build scope for the if-statement sub-blocks
             scope_vars = {}
             for v in func_locals:
@@ -183,8 +187,13 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
                 if v not in scope_vars:
                     scope_vars[v] = global_vars[v]
 
+            # Build if-then blocks
+            if_body_block = builder.append_basic_block(name="block_"+str(__block_counter))
+            __block_counter += 1
+            if_after_block = builder.append_basic_block(name="block_"+str(__block_counter))
+            __block_counter += 1
+
             # Build condition
-            cond_node = ast.children(iter_node.identifier)[0]
             cond_result = builder.icmp_signed(
                 '!=',
                 __node_results[ast.children(cond_node.identifier)[0].identifier],
@@ -192,8 +201,40 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
             )
             __node_results[cond_node.identifier] = cond_result
 
+            # Create initial branch
+            builder.cbranch(cond_result, if_body_block, if_after_block)
+
+            # Build body block
+            builder.position_at_start(if_body_block)
+            build_block(
+                ast,
+                body_node,
+                scope_vars,
+                func_params,
+                function,
+                builder
+            )
+
+            # Append jump to end of while-oop
+            if (iter_node.tag == 'while'):
+                try:
+                    cond_result = builder.icmp_signed(
+                        '!=',
+                        __node_results[ast.children(cond_node.identifier)[0].identifier],
+                        ir.Constant(__type_dict["int"], 0)
+                    )
+                    __node_results[cond_node.identifier] = cond_result
+                    builder.cbranch(cond_result, if_body_block, if_after_block)
+                except AssertionError:
+                    # Likely due to return within while-loop
+                    # Leave as if-statement
+                    pass
+
+            # Finish construction of if/while
+            builder.position_at_start(if_after_block)
+
+            '''
             # Build if-then using helper
-            body_node = ast.children(iter_node.identifier)[1]
             with builder.if_then(cond_result) as endblock:
                 build_block(
                     ast,
@@ -211,7 +252,9 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
                         __node_results[ast.children(cond_node.identifier)[0].identifier],
                         ir.Constant(__type_dict["int"], 0)
                     )
+                    # Has an error in tests/test_if.c where first while loop builder.block.terminated = True
                     builder.cbranch(cond_result, builder.block, endblock) 
+            '''
 
         elif (iter_node.tag == 'block'):
             print("TO DO: Handle case for standalone block")
