@@ -233,31 +233,32 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
             # Finish construction of if/while
             builder.position_at_start(if_after_block)
 
-            '''
-            # Build if-then using helper
-            with builder.if_then(cond_result) as endblock:
-                build_block(
-                    ast,
-                    body_node,
-                    scope_vars,
-                    func_params,
-                    function,
-                    builder
-                )
-
-                if (iter_node.tag == 'while'):
-                    # Add condition to the end of the while loop
-                    cond_result = builder.icmp_signed(
-                        '!=',
-                        __node_results[ast.children(cond_node.identifier)[0].identifier],
-                        ir.Constant(__type_dict["int"], 0)
-                    )
-                    # Has an error in tests/test_if.c where first while loop builder.block.terminated = True
-                    builder.cbranch(cond_result, builder.block, endblock) 
-            '''
-
         elif (iter_node.tag == 'block'):
-            print("TO DO: Handle case for standalone block")
+
+            body_node = iter_node
+
+            # Build scope for the if-statement sub-blocks
+            scope_vars = {}
+            for v in func_locals:
+                if v not in scope_vars:
+                    scope_vars[v] = func_locals[v]
+
+            for v in global_vars:
+                if v not in scope_vars:
+                    scope_vars[v] = global_vars[v]
+
+            body_block = builder.append_basic_block(name="block_"+str(__block_counter))
+            __block_counter += 1
+
+            builder.position_at_start(body_block)
+            build_block(
+                ast,
+                body_node,
+                scope_vars,
+                func_params,
+                function,
+                builder
+            )
 
         else:
             # Node is either a constant, variable ID, or function call
