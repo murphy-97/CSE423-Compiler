@@ -355,6 +355,9 @@ def help_func_block(grammar, tokens, root_name="block"):
     root_node = Node(tag=root_name)
     tree.add_node(root_node, parent=None)
 
+    func_flag_no_init = 0
+    func_flag_init = 0
+    func_flag = 0
     front_index = 0
     num_tokens_to_skip = 0
 
