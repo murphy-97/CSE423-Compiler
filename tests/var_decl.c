@@ -2,10 +2,14 @@ int main()
 {
 	int a;
 	int b;
-	int c = 0;
+	int c;
+	c = 0;
 	int d;
-	int e = 0;
-	int f = (a + b / c) + (e);
+	int e;
+	c = 0;
+	int f;
+	f = (a + b / c) + (e);
+	int g;
 	g = 0 * 3 + 2;
     return 1;
 }

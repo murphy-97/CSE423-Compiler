@@ -12,6 +12,10 @@ TO DO:
 from treelib import Node, Tree
 from llvmlite import ir
 
+# Debug values
+ALLOW_IMPLICIT_VAR_DEC = True
+
+# Global values
 __module = None
 __ir_funcs = {}         # Stores function objects for use when calling functions
 __node_results = {}     # Used to keep track of IR results by node ID (intermediate steps)
@@ -102,7 +106,8 @@ def build_llvm(ast):
 
 def build_block(ast, block_root, global_vars, func_params, function, builder):
     # Bulider is passed in by caller. Caller creates block object and builder
-    global __block_counter
+    global __variable_counter   # Used when explicitly declaring variables
+    global __block_counter      # Used when creating blocks
 
     traversal_stack = []    # Used to traverse tree build node_stack (excludes subblocks)
     node_stack = []         # Used to build function. Nodes pushed in level order, popped in reverse level order
@@ -113,7 +118,7 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
         node_stack.append(iter_node)        # Add current node to node_stack
 
         # Add children to the traversal_stack
-        if (iter_node.tag not in ['if', 'while', 'block']):
+        if (iter_node.tag not in ['if', 'while', 'block'] and iter_node.tag not in __type_dict):
             for child in ast.children(iter_node.identifier):
                 traversal_stack.append(child)
         elif (iter_node.tag in ['if', 'while']):
@@ -274,6 +279,22 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
                     arg_list.append(__node_results[child.identifier])
 
                 builder.call(__ir_funcs[iter_node.tag], arg_list)
+            
+            elif (iter_node.tag in __type_dict):
+                # Explicit variable declaration
+                # Currently expects declaration without initialization
+
+                var_type = iter_node.tag
+                var_name = ast.children(iter_node.identifier)[0].tag
+
+                assert(__module is not None)
+                func_locals[var_name] = ir.GlobalVariable(
+                    __module,
+                    __type_dict[var_type],
+                    var_name + "_" + str(__variable_counter)
+                )
+                __variable_counter += 1
+                result = func_locals[var_name]
                 
             else:
                 # Constant or variable
@@ -505,19 +526,21 @@ def set_variable(value, var_name, func_locals, func_params, function, builder, g
         # 3rd check: variables from the above scopes
         operand = global_vars[var_name]
     else:
-        print("WARNING! Implicit declaration of variable '" + var_name + "' (set_variable)")
-
-        print("Assuming type is int")
-        var_type = "int"
-        
-        assert(__module is not None)
-        func_locals[var_name] = ir.GlobalVariable(
-            __module,
-            __type_dict[var_type],
-            var_name + "_" + str(__variable_counter)
-        )
-        __variable_counter += 1
-        operand = func_locals[var_name]
+        if (ALLOW_IMPLICIT_VAR_DEC):
+            print("WARNING! Implicit declaration of variable '" + var_name + "' (set_variable)")
+            print("Assuming type is int")
+            var_type = "int"
+            
+            assert(__module is not None)
+            func_locals[var_name] = ir.GlobalVariable(
+                __module,
+                __type_dict[var_type],
+                var_name + "_" + str(__variable_counter)
+            )
+            __variable_counter += 1
+            operand = func_locals[var_name]
+        else:
+            raise Exception("Undeclared variable '" + var_name + "'")
 
     return builder.store(value, operand)
 
@@ -536,20 +559,22 @@ def get_variable(var_name, func_locals, func_params, function, builder, global_v
         # 3rd check: variables from the above scopes
         operand = global_vars[var_name]
     else:
-        # raise Exception("IR Builder Unknown Variable: " + var_name)
-        print("WARNING! Implicit declaration of variable '" + var_name + "' (get_variable)")
+        if (ALLOW_IMPLICIT_VAR_DEC):
+            print("WARNING! Implicit declaration of variable '" + var_name + "' (get_variable)")
 
-        print("Assuming type is int")
-        var_type = "int"
+            print("Assuming type is int")
+            var_type = "int"
 
-        assert(__module is not None)
-        func_locals[var_name] = ir.GlobalVariable(
-            __module,
-            __type_dict[var_type],
-            var_name + "_" + str(__variable_counter)
-        )
-        __variable_counter += 1
-        operand = func_locals[var_name]
+            assert(__module is not None)
+            func_locals[var_name] = ir.GlobalVariable(
+                __module,
+                __type_dict[var_type],
+                var_name + "_" + str(__variable_counter)
+            )
+            __variable_counter += 1
+            operand = func_locals[var_name]
+        else:
+            raise Exception("Undeclared variable '" + var_name + "'")
 
     return operand
 
