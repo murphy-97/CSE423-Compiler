@@ -38,8 +38,7 @@ def build_llvm(ast, symbol_table):
     __symbol_table = symbol_table
 
     global __module
-    if (__module is None):
-        __module = ir.Module(name="program")
+    __module = ir.Module(name="program")
 
     assert(ast.get_node(ast.root).tag == "program")
     global_vars = {}    # Stores global variable objects

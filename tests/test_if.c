@@ -1,5 +1,9 @@
 int main(void)
 {
+    int x;
+    int y;
+    int z;
+
     if (1 + 2) {
         return 0;
     }

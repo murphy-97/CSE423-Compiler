@@ -16,7 +16,10 @@ import traceback
 DEBUG = True
 
 ### Main function for running this module
-def main():
+def main(args=None):
+    if (args is None):
+        args = sys.argv
+        
     """Interprets command line arguments and runs compilers
     Command line arguments:
     -i  Input file name
@@ -36,7 +39,7 @@ def main():
     try:
         # Omit first argument (module name) by list slice
         opts, _ = getopt.getopt(
-            sys.argv[1:],
+            args[1:],
             "hi:o:",
             [
                 # File I/O options
@@ -111,15 +114,18 @@ def main():
 
             except OSError as e:
                 print("OS Error: " + str(e))
+                raise e     # Raise for test file
             except Exception as e:
                 print("Failed to compile '{}".format(i_file))
                 print("Error: " + str(e))
                 if (DEBUG):
                     track = traceback.format_exc()
                     print(track)
+                raise e     # Raise for test file
 
     except OSError as e:
         print("OS Error: " + str(e))
+        raise e     # Raise for test file
 
 ### Prints usage for the module
 def usage():
