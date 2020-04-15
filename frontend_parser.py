@@ -6,8 +6,16 @@ from collections import OrderedDict
 # Import project modules
 import errors
 
+# Global variables
+__symbol_tables = {}  # Key = func name, Value = symbol table
+
 # Parser for compiler frontend
-def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
+def run_parser(tokens, grammar, look_for_brace=False, root_name="program", clear_symbol_table=False):
+    # Create dictionary of symbol tables
+    global __symbol_tables
+    if (clear_symbol_table):
+        __symbol_tables = {}
+    # Create base abstract syntax tree
     tree = Tree()
     # create root node
     root = Node(tag=root_name)
@@ -47,7 +55,7 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program"):
             raise Exception(errors.ERR_NO_RULE + " '" + tokens[i][0] +
                             "' on line " + str(tokens[i][2]))
 
-    return [tree, num_tokens_to_skip]
+    return [tree, num_tokens_to_skip, __symbol_tables]
 
 
 def help_func_manager(result, grammar, tokens):
@@ -193,8 +201,6 @@ def help_func_expression(grammar, tokens):
             token_depth = []
             end_point = -1
 
-            print("TOKENS:", tokens)
-
             for i in range(2, len(tokens)):
                 tokens_skip += 1
                 if (tokens[i][0] == "("):
@@ -313,8 +319,11 @@ def help_func_funDeclaration(grammar, tokens):
     body_node = Node(tag="func_body")
 
     # create root node
-    func_root = Node(tag="func:"+tokens[1][0])
+    func_name = tokens[1][0]
+    func_root = Node(tag="func:"+func_name)
     return_type = Node(tag=tokens[0][0])
+    # Create symbol subtable
+    __symbol_tables[func_name] = {}
 
     # Assemble basic subtree
     tree.add_node(func_root, parent=None)
@@ -374,14 +383,14 @@ def help_func_funDeclaration(grammar, tokens):
 
     #call help_func_block
     #parser_out = run_parser(body_tokens, grammar, look_for_brace=True, root_name="func_body") #may be off by one
-    block_out = help_func_block(grammar, body_tokens, root_name="func_body")
+    block_out = help_func_block(grammar, body_tokens, root_name="func_body", function=func_name)
     body_tree = block_out[0]
     skip_tokens += block_out[1]
     tree.paste(func_root.identifier, body_tree)
 
     return [tree, skip_tokens]
 
-def help_func_block(grammar, tokens, root_name="block"):
+def help_func_block(grammar, tokens, root_name="block", function=None):
 
     #go line by line
     #if }
@@ -408,7 +417,7 @@ def help_func_block(grammar, tokens, root_name="block"):
             return [tree, num_tokens_to_skip + 1]
 
         elif (tokens[i][0] == "{"):
-            result = help_func_block(grammar, tokens[i+1:])
+            result = help_func_block(grammar, tokens[i+1:], function=function)
             
             front_index += 1 + result[1]
             i += 1 + result[1]
@@ -433,7 +442,7 @@ def help_func_block(grammar, tokens, root_name="block"):
                 raise Exception(tokens[i][0] + " without body '{' on line " + str(tokens[i][2]))
 
             cond_result = help_func_expression(grammar, tokens[i+2:first_bracket-1])
-            body_result = help_func_block(grammar, tokens[first_bracket+1:], "condition_body")
+            body_result = help_func_block(grammar, tokens[first_bracket+1:], root_name="condition_body", function=function)
 
             # Increment i, num_tokens_to_skip, and front_index
             if_skip = 1    # if/while
@@ -477,12 +486,14 @@ def help_func_block(grammar, tokens, root_name="block"):
                     # print("This is a variable declaration with no intilization")
                     var_type = expr_tokens[0][0]
                     var_name = expr_tokens[1][0]
+                    __symbol_tables[function][var_name] = var_type
                     expr_tokens.pop(0)
                 elif (len(expr_tokens) > 2 and expr_tokens[0][1] == 'typeSpecifier' and expr_tokens[1][1] == 'ID' and expr_tokens[2][1] == '='):
                     func_flag = 1
                     # print("This is a variable declaration with intilization")
                     var_type = expr_tokens[0][0]
                     var_name = expr_tokens[1][0]
+                    __symbol_tables[function][var_name] = var_type
                     expr_tokens.pop(0)
                 if (func_flag == 1):
                     tmp_tree = Tree()

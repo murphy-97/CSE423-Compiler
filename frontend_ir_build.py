@@ -13,7 +13,7 @@ from treelib import Node, Tree
 from llvmlite import ir
 
 # Debug values
-ALLOW_IMPLICIT_VAR_DEC = True   # SHOULD BE TRUE. Tree order != code order!!!
+ALLOW_IMPLICIT_VAR_DEC = False
 
 # Global values
 __module = None
@@ -22,6 +22,7 @@ __node_results = {}     # Used to keep track of IR results by node ID (intermedi
 __variable_counter = 0  # Guarantees that variables have globally-unique names
 __block_counter = 0     # Guarantees that blocks have globally-unique names
 __var_nodes = {}        # Used to store which nodes have declared variables
+__symbol_table = {}     # Used to read variable types from the parser
 
 # Type dictionary used in parsing the AST
 __type_dict = {
@@ -32,7 +33,9 @@ __type_dict = {
 }
 
 # Iterative function to build LLVM representation
-def build_llvm(ast):
+def build_llvm(ast, symbol_table):
+    global __symbol_table
+    __symbol_table = symbol_table
 
     global __module
     if (__module is None):
@@ -533,7 +536,18 @@ def set_variable(value, var_name, func_locals, func_params, function, builder, g
         # 3rd check: variables from the above scopes
         operand = global_vars[var_name]
     else:
-        if (ALLOW_IMPLICIT_VAR_DEC):
+        if (var_name in __symbol_table[function._get_name()]):
+            var_type = __symbol_table[function._get_name()][var_name]
+            assert(__module is not None)
+            func_locals[var_name] = ir.GlobalVariable(
+                __module,
+                __type_dict[var_type],
+                var_name + "_" + str(__variable_counter)
+            )
+            __variable_counter += 1
+            operand = func_locals[var_name]
+
+        elif (ALLOW_IMPLICIT_VAR_DEC):
             print("WARNING! Implicit declaration of variable '" + var_name + "' (set_variable)")
             print("Assuming type is int")
             var_type = "int"
@@ -566,7 +580,18 @@ def get_variable(var_name, func_locals, func_params, function, builder, global_v
         # 3rd check: variables from the above scopes
         operand = global_vars[var_name]
     else:
-        if (ALLOW_IMPLICIT_VAR_DEC):
+        if (var_name in __symbol_table[function._get_name()]):
+            var_type = __symbol_table[function._get_name()][var_name]
+            assert(__module is not None)
+            func_locals[var_name] = ir.GlobalVariable(
+                __module,
+                __type_dict[var_type],
+                var_name + "_" + str(__variable_counter)
+            )
+            __variable_counter += 1
+            operand = func_locals[var_name]
+
+        elif (ALLOW_IMPLICIT_VAR_DEC):
             print("WARNING! Implicit declaration of variable '" + var_name + "' (get_variable)")
 
             print("Assuming type is int")
@@ -580,6 +605,7 @@ def get_variable(var_name, func_locals, func_params, function, builder, global_v
             )
             __variable_counter += 1
             operand = func_locals[var_name]
+
         else:
             raise Exception("Undeclared variable '" + var_name + "'")
 
