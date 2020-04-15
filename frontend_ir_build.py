@@ -13,7 +13,7 @@ from treelib import Node, Tree
 from llvmlite import ir
 
 # Debug values
-ALLOW_IMPLICIT_VAR_DEC = True
+ALLOW_IMPLICIT_VAR_DEC = True   # SHOULD BE TRUE. Tree order != code order!!!
 
 # Global values
 __module = None
@@ -277,7 +277,13 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
                 func_name = iter_node.tag[5:]
                 arg_list = []
                 for child in ast.children(iter_node.identifier):
-                    arg_list.append(__node_results[child.identifier])
+                    if (child.identifier in __var_nodes):
+                        # Need to load variable from pointer
+                        var_load = builder.load(__node_results[child.identifier])
+                        arg_list.append(var_load)
+                    else:
+                        # Can pass constant directly
+                        arg_list.append(__node_results[child.identifier])
 
                 builder.call(__ir_funcs[func_name], arg_list)
             

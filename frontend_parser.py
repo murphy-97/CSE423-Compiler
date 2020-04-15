@@ -184,7 +184,7 @@ def help_func_expression(grammar, tokens):
             tree = Tree()
             call_node = Node(tag="func:"+tokens[0][0])
             tree.add_node(call_node, parent=None)
-            tokens_skip += 3
+            tokens_skip += 2
 
             # Children of node are function parameters
             # Iterate through tokens to find each parameter
@@ -193,10 +193,10 @@ def help_func_expression(grammar, tokens):
             token_depth = []
             end_point = -1
 
-            # print("TOKENS:", tokens)
+            print("TOKENS:", tokens)
 
             for i in range(2, len(tokens)):
-
+                tokens_skip += 1
                 if (tokens[i][0] == "("):
                     depth += 1
                 elif (tokens[i][0] == ")"):
@@ -224,6 +224,7 @@ def help_func_expression(grammar, tokens):
 
             func_params = []
             for i in range(len(split_points)-1):
+                print([split_points[i], split_points[i+1]])
                 func_params.append(tokens[split_points[i]:split_points[i+1]])
 
             # Add parameters to tree

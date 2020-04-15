@@ -83,6 +83,11 @@ IR BUILDER:
                                     - Not yet supported for multiple parameters,
                                       expressions as parameters, or function
                                       calls as parameters 
+                                    - Function calls only support variables and
+                                      constants as parameters. To pass the
+                                      result of an expression or another
+                                      function call, assign the result to a
+                                      variable.
 
     fuction prototypes:             incomplete 
     else statement:                 incomplete
@@ -109,7 +114,9 @@ IR BUILDER:
     for statments:                  incomplete
                                     (will be converted to while by parser)
 
-    function calling:               incomplete
+    function calling:               complete(ish)
+                                    - See parser section above for limitations
+                                      on function calling
 
   MISC:
     comments:                       complete(ish)
