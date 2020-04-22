@@ -128,3 +128,5 @@ IR BUILDER:
                                       number reporting errors
                                     - Line number information is not preserved
                                       after parsing
+                                     
+    Function parameters and local parameters cannot have the same name
