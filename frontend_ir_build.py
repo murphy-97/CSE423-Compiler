@@ -292,7 +292,7 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
             elif (iter_node.tag in __type_dict):
                 # Explicit variable declaration
                 # Currently expects declaration without initialization
-
+                '''
                 var_type = iter_node.tag
                 var_name = ast.children(iter_node.identifier)[0].tag
 
@@ -302,8 +302,14 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
                     __type_dict[var_type],
                     var_name + "_" + str(__variable_counter)
                 )
+                print("New variable " + var_name + " found in declaration")
+                print("Creating " + var_name + "_" + str(__variable_counter))
                 __variable_counter += 1
                 result = func_locals[var_name]
+                '''
+                # NOTE: Case must be detected but should not create a variable.
+                # Symbol table is used to detect declaration. (Built by parser)
+                continue
                 
             else:
                 # Constant or variable
@@ -550,6 +556,8 @@ def set_variable(value, var_name, func_locals, func_params, function, builder, g
                 __type_dict[var_type],
                 var_name + "_" + str(__variable_counter)
             )
+            print("New variable " + var_name + " found in symbol table")
+            print("Creating " + var_name + "_" + str(__variable_counter))
             __variable_counter += 1
             operand = func_locals[var_name]
 
@@ -594,6 +602,8 @@ def get_variable(var_name, func_locals, func_params, function, builder, global_v
                 __type_dict[var_type],
                 var_name + "_" + str(__variable_counter)
             )
+            print("New variable " + var_name + " found in symbol table")
+            print("Creating " + var_name + "_" + str(__variable_counter))
             __variable_counter += 1
             operand = func_locals[var_name]
 

@@ -16,5 +16,6 @@ int main()
 
 int test_func(int a)
 {
-	int try_hard;
+	int try_hard = 1;
+	return a;
 }

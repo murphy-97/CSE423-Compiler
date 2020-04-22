@@ -1,7 +1,7 @@
 int func_dec(int a, int b, int c)
 {
-  a = a + b + c;
-  return a;
+  int d = a + b + c;
+  return d;
 }
 
 int main(void)
