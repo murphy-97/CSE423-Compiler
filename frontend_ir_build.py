@@ -389,6 +389,13 @@ def build_bin_op(ast, iter_node, func_locals, global_vars, func_params, function
                 builder,
                 global_vars,
             )
+            
+            try:
+                # Variable
+                operand_l = builder.load(operand_l)
+            except:
+                # Constant or expression
+                pass
 
             # Evaluate right side operand
             if (iter_node.tag == '+='):

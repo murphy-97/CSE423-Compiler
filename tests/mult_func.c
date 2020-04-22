@@ -5,6 +5,7 @@ int main(void)
 
 int func_dec(int input)
 {
-  input += 1 + 2;
-  return input * 10;
+  int a = input;
+  a += 1 + 2;
+  return a * 10;
 }
