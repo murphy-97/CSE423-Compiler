@@ -132,3 +132,4 @@ IR BUILDER:
     Function parameters and local parameters cannot have the same name
     Function parameters cannot be redefined via =, +=, -=, etc
     Local variables *can* be redefeind via =, +=, -=, etc
+    paramater names cannot contain ")" or "("
