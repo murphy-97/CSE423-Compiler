@@ -133,4 +133,3 @@ IR BUILDER:
     Function parameters cannot be redefined via =, +=, -=, etc
     Local variables *can* be redefeind via =, +=, -=, etc
     parameter names cannot contain ")" or "("
-    functions must end in a return statement
