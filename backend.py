@@ -159,12 +159,18 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
     split = code_line.replace(",", "")
     split = split.replace("\t", "")
     split = split.split(" ")
+    div_flag = 0
 
     asm_fun_call = "TMP"
     if (split[2] == "fadd"):
         asm_fun_call = "add"
     if (split[2] == "fsub"):
         asm_fun_call = "sub"
+    if (split[2] == "fmul"):
+        asm_fun_call = "imul"
+    if (split[2] == "fdiv"):
+        asm_fun_call = "idivl"
+        div_flag = 1
 
     if (split[0] not in id_variables and "\"" in split[0]):
         id_variables[split[0]] = new_id_value
@@ -179,10 +185,14 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
         output_code.append("\tmovl\t" + str(id_variables[split[4]]) + "(%rbp)" + ", %eax")
     else: #constant
         output_code.append("\tmovl\t$" + split[4] + ", %eax")
-    if (split[5].find("\"") != -1):
-        output_code.append("\t" + asm_fun_call + "\t\t" + str(id_variables[split[5]]) + "(%rbp)" + ", %eax")
-    else:#constant
-        output_code.append("\t" + asm_fun_call + "\t\t$" + split[5] + ", %eax")
+    if (div_flag):
+        output_code.append("\tcltd")
+        output_code.append("\t" + asm_fun_call + "\t" + str(id_variables[split[5]]) + "(%rbp)")
+    else:
+        if (split[5].find("\"") != -1):
+            output_code.append("\t" + asm_fun_call + "\t\t" + str(id_variables[split[5]]) + "(%rbp)" + ", %eax")
+        else:#constant
+            output_code.append("\t" + asm_fun_call + "\t\t$" + split[5] + ", %eax")
     assert(split[0].find("\"") != -1)
     output_code.append("\tmovl\t%eax"  + ", " + str(id_variables[split[0]]) + "(%rbp)")
     return(new_id_value)
