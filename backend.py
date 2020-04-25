@@ -65,11 +65,12 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
 
     passed_offset = 0
     local_offset = 0
-    
+
     id_variables = id_params(fun_parameters, output_code)
-    id_value = 20 - (4 * len(id_variables))
-    if (id_value >= 0):
-        id_value = -4
+    # print("HERE ID VAR: ", id_variables)
+    id_value = -4 - (4 * len(id_variables))
+
+    found_return_flag = 0
 
     #identify case for each line in the function and change it to assembly via helper fuctions
     #helper functions return arrays of created lines
@@ -77,48 +78,56 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
     print("\n\CODE FOR FUNCTION")
     for i in range(1, len(raw_code)):
         if ("fadd" in raw_code[i]):
-            print("fadd:", i)
-            id_value = fgrab_params(raw_code[i], id_variables, id_value)
+            # print("fadd:", i)
+            id_value = fgrab_params(raw_code[i], id_variables, id_value, output_code)
             #now call function to check if variable being assigned to has negative value in id_variables
             #if so, then push it onto the stack with its value
             #replace references to other values with appropiate values based on value in id_variables
             #return list of strings to be appended
-            print("Id Variables: ", id_variables)
-            print("Line of code: ", raw_code[i])
+            # print("Id Variables: ", id_variables)
+            # print("Line of code: ", raw_code[i])
 
         elif ("fsub" in raw_code[i]):
-            print("fsub:", i)
-            id_value = fgrab_params(raw_code[i], id_variables, id_value)
+            # print("fsub:", i)
+            found_return_flag = 0
+            id_value = fgrab_params(raw_code[i], id_variables, id_value, output_code)
 
         elif ("fmul" in raw_code[i]):
-            print("fmul:", i)
-            id_value = fgrab_params(raw_code[i], id_variables, id_value)
+            # print("fmul:", i)
+            found_return_flag = 0
+            id_value = fgrab_params(raw_code[i], id_variables, id_value, output_code)
 
         elif ("fdiv" in raw_code[i]):
-            print("fdiv:", i)
-            id_value = fgrab_params(raw_code[i], id_variables, id_value)
+            # print("fdiv:", i)
+            found_return_flag = 0
+            id_value = fgrab_params(raw_code[i], id_variables, id_value, output_code)
 
         elif ("frem" in raw_code[i]):
-            print("frem:", i)
-            id_value = fgrab_params(raw_code[i], id_variables, id_value)
+            # print("frem:", i)
+            found_return_flag = 0
+            id_value = fgrab_params(raw_code[i], id_variables, id_value, output_code)
 
         elif ("store" in raw_code[i]):
-            print("store:", i)
-            id_value = sgrab_params(raw_code[i], id_variables, id_value)
-            print("Id Variables: ", id_variables)
-            print("Line of code: ", raw_code[i])
+            # print("store:", i)
+            found_return_flag = 0
+            id_value = sgrab_params(raw_code[i], id_variables, id_value, output_code)
+            # print("Id Variables: ", id_variables)
+            # print("Line of code: ", raw_code[i])
 
         elif ("ret" in raw_code[i]):
-            print("ret:", i)
-            # fparams = rgrab_params(raw_code[i], id_variables, id_value)
+            # print("ret:", i)
+            found_return_flag = 1
+            fparams = rgrab_params(raw_code[i], id_variables, id_value, output_code)
         else:
             print("Error: command found in ir with unknown command")
+            print(raw_code[i])
             exit(1)
 
     #call function to do rest
 
-    output_code.append("\tpopq\t%rbp")
-    output_code.append("\tretq")
+    if (found_return_flag == 0):
+        output_code.append("\tpopq\t%rbp")
+        output_code.append("\tretq")
     output_code.append("\t\t\t\t\t\t\t\t\t\t## -- End function")
     # new_code.insert(0, "\n.p2align")
     return output_code
@@ -143,13 +152,20 @@ def id_params(fun_parameters, output_code):
     return output
 
 
-def fgrab_params(code_line, id_variables, id_value):
+def fgrab_params(code_line, id_variables, id_value, output_code):
+    #make sure order is correct for operands
     new_id_value = id_value
     variables = []
     split = code_line.replace(",", "")
     split = split.replace("\t", "")
     split = split.split(" ")
-    print("len fgrab", len(split))
+
+    asm_fun_call = "TMP"
+    if (split[2] == "fadd"):
+        asm_fun_call = "add"
+    if (split[2] == "fsub"):
+        asm_fun_call = "sub"
+
     if (split[0] not in id_variables and "\"" in split[0]):
         id_variables[split[0]] = new_id_value
         new_id_value -= 4
@@ -159,27 +175,58 @@ def fgrab_params(code_line, id_variables, id_value):
     if (split[5] not in id_variables and "\"" in split[5]):
         id_variables[split[5]] = new_id_value
         new_id_value -= 4
+    if (split[4].find("\"") != -1):
+        output_code.append("\tmovl\t" + str(id_variables[split[4]]) + "(%rbp)" + ", %eax")
+    else: #constant
+        output_code.append("\tmovl\t$" + split[4] + ", %eax")
+    if (split[5].find("\"") != -1):
+        output_code.append("\t" + asm_fun_call + "\t\t" + str(id_variables[split[5]]) + "(%rbp)" + ", %eax")
+    else:#constant
+        output_code.append("\t" + asm_fun_call + "\t\t$" + split[5] + ", %eax")
+    assert(split[0].find("\"") != -1)
+    output_code.append("\tmovl\t%eax"  + ", " + str(id_variables[split[0]]) + "(%rbp)")
     return(new_id_value)
 
-def sgrab_params(code_line, id_variables, id_value):
+print("THERE IS A EXTRA DOLLAR SIGN")
+def sgrab_params(code_line, id_variables, id_value, output_code):
+    print("ID VAR: ", id_variables)
     new_id_value = id_value
     variables = []
     split = code_line.replace(",", "")
     split = split.replace("\t", "")
     split = split.split(" ")
     if (split[2] not in id_variables and "\"" in split[0]):
-        id_variables[split[2]] = new_id_value
-        new_id_value -= 4
+        # assert(split[2].isdigit)
+        # id_variables[split[2]] = new_id_value
+        # output_code.append("\tmovl from set: " + split[2])
+        # new_id_value -= 4
+        pass
+
     if (split[4] not in id_variables and "\"" in split[4]):
         id_variables[split[4]] = new_id_value
+        if (split[2].find("\"") == -1):
+            output_code.append("\tmovl\t$" + split[2] + ", " + str(id_variables[split[4]]) + "(%rbp)")
+        else:
+            output_code.append("\tmovl\t" + str(id_variables[split[2]]) + "(%rbp)" + ", " + "%eax")
+            output_code.append("\tmovl\t" + "%eax" + ", " + str(id_variables[split[4]]) + "(%rbp)")
+            # output_code.append("\tmovl\t" + split[2] + ", " + str(id_variables[split[2]]) + "(%rbp)")
+        # output_code.append("\tmovl from set" + split[4])
         new_id_value -= 4
+    # output_code.append("\tmovl\t$" + split[2] + ", %eax")
     return(new_id_value)
 
-def rgrab_params(code_line, id_variables, id_value):
+def rgrab_params(code_line, id_variables, id_value, output_code):
+    # print("ID VAR: ", id_variables)
     variables = []
     split = code_line.replace(",", "")
     split = split.split(" ")
-    variables.append(split[2])
+    # variables.append(split[2])
+    if (split[2].find("\"") == -1):
+        output_code.append("\tmovl\t$" + split[2] + ", %eax")
+    else:
+        output_code.append("\tmovl\t" + str(id_variables[split[2]]) + "(%rbp)" + ", %eax")
+    output_code.append("\tpopq\t%rbp")
+    output_code.append("\tretq")
     return(id_value)
 
 print("Hannah: what is the difference between @ and % in variable names and do we need to worrry about it")
