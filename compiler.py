@@ -36,6 +36,7 @@ def main(args=None):
     opt_print_prs = False   # Print parser output in run_frontend()
     opt_print_ir = False    # Print IR output in run_frontend()
     opt_print_opt = False   # Print optimizer output in this function
+    opt_print_asm = False   # Print backend output in this function
 
     try:
         # Omit first argument (module name) by list slice
@@ -50,7 +51,8 @@ def main(args=None):
                 "p-scn",        # Print scanner output
                 "p-prs",        # Print parser output
                 "p-ir",         # Print IR output
-                "p-opt"         # Print optimizer output
+                "p-opt",        # Print optimizer output
+                "p-asm"         # Print backend output
             ]
         )
     except getopt.GetoptError:
@@ -79,6 +81,9 @@ def main(args=None):
 
         elif opt == '--p-opt':
             opt_print_opt = True
+
+        elif opt == '--p-asm':
+            opt_print_asm = True
 
     # Require input file
     if not i_file:
@@ -115,11 +120,13 @@ def main(args=None):
                     code_ir = optimizer.run_optimizer(code_ir)
 
                     if (opt_print_opt):
-                        print("====== OPTIMZED IR OUTPUT ===========")
+                        print("====== OPTIMZED IR OUTPUT ==")
                         print(code_ir)
 
                     code_source = backend.run_backend(code_ir)
-                    print(code_source)
+                    if (opt_print_asm):
+                        print("====== ASM BUILDER OUTPUT ==")
+                        print(code_source)
                     # !! END MAIN COMPILER FUNCTIONALITY !!
 
                     # Write compiled file to disk

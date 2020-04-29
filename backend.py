@@ -2,6 +2,7 @@
 # backend.py: backend systems for C-to-ASM compiler implemented in Python
 
 __var_adrs = {}     # Stores addresses allocated by the store command
+INIT_VARS_TO_ZERO = True
 
 ### Main method for backend module
 def run_backend(code_lines):
@@ -78,7 +79,6 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
     #identify case for each line in the function and change it to assembly via helper fuctions
     #helper functions return arrays of created lines
     #loop though lines appending them to output_code
-    print("\n\CODE FOR FUNCTION")
     for i in range(1, len(raw_code)):
 
         if ("fadd" in raw_code[i]):
@@ -169,17 +169,17 @@ def cgrab_params(code_line, id_variables, id_value, output_code):
         #check for cur_reg > 5
         #check for it here like i did before
         if (split[4].find("\"") != -1): #is a constant
-            string = "\tmovl\t" + registers[cur_reg] + ", $" + split[6 + i + 1]
+            string = "\tmovl    " + registers[cur_reg] + ", $" + split[6 + i + 1]
         else: #is a constant
-            string = "\tmovl\t" + registers[cur_reg] + ", " + str(id_variables[split[6 + i + 1]])
+            string = "\tmovl    " + registers[cur_reg] + ", " + str(id_variables[split[6 + i + 1]])
         cur_reg += 1
         output_code.append(string) ## parameters begin at 6 and account for off by 1
     tmp = split[6 + i+1 + 2][:len(split[6 + i+1 + 2])-1]
     if (cur_reg < 5):
         if (tmp.find("\"") != -1): #is a constant
-            string = "\tmovl\t" + registers[cur_reg] + ", " + str(id_variables[tmp])
+            string = "\tmovl    " + registers[cur_reg] + ", " + str(id_variables[tmp])
         else: #is a var
-            string = "\tmovl\t" + registers[cur_reg] + ", $" + tmp
+            string = "\tmovl    " + registers[cur_reg] + ", $" + tmp
         #still room in registers]
     else:
         print ("HANNAH take into account more than 6 variables if i did not")
@@ -211,7 +211,7 @@ def id_params(fun_parameters, output_code):
         print ("HANNAH take into account more than 6 variables")
 
         if (mapping_elem < 6):
-            output_code.append("\tmovl\t" + mapping[mapping_elem] + ", "+ str(i) + "(%rbp)")
+            output_code.append("\tmovl    " + mapping[mapping_elem] + ", "+ str(i) + "(%rbp)")
             mapping_elem += 1
         i -= 4
 
@@ -254,7 +254,6 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
 
     if (split[4].find("\"") != -1):
         output_code.append("\tmovl    " + str(id_variables[split[4]]) + "(%rbp)" + ", %eax")
-
     else: #constant
         output_code.append("\tmovl    $" + split[4] + ", %eax")
 
@@ -275,7 +274,6 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
     return(new_id_value)
 
 def lgrab_params(code_line, id_variables, id_value, output_code):
-    print("Load is a work in progress")
 
     global __var_adrs
     
@@ -285,18 +283,21 @@ def lgrab_params(code_line, id_variables, id_value, output_code):
     split = split.replace("\t", "")
     split = split.split(" ")
 
-    print("ID VARS", id_variables)
-
     var_name = split[5]
 
     if (var_name not in __var_adrs):
-        raise Exception("IR loading unknown variable '" + var_name + "'")
+        if (INIT_VARS_TO_ZERO):
+            print("WARNING: '" + var_name + "' used uninitialized. Setting value to 0")
+            adrs_src = "$0"
+        else:
+            raise Exception("IR loading unitialized variable '" + var_name + "'")
+    else:
+        adrs_src = __var_adrs[var_name]
 
     if (split[0] not in id_variables and "\"" in split[0]):
         id_variables[split[0]] = new_id_value
         new_id_value -= 4
 
-    adrs_src = __var_adrs[var_name]
     adrs_dst = str(id_variables[split[0]]) + "(%rbp)"
     code_line = "Load " + var_name + " from " + adrs_src + " into " + adrs_dst
     output_code.append("\tmovl    " + adrs_src + ", " + "%eax")
@@ -340,7 +341,6 @@ def sgrab_params(code_line, id_variables, id_value, output_code):
         new_id_value -= 4
     # output_code.append("\tmovl\t$" + split[2] + ", %eax")
     __var_adrs[var_name] = address
-    print("Storing " + var_name + " in " + address)
     return(new_id_value)
 
 def rgrab_params(code_line, id_variables, id_value, output_code):
@@ -350,10 +350,10 @@ def rgrab_params(code_line, id_variables, id_value, output_code):
     split = split.split(" ")
     # variables.append(split[2])
     if (split[2].find("\"") == -1):
-        output_code.append("\tmovl\t$" + split[2] + ", %eax")
+        output_code.append("\tmovl    $" + split[2] + ", %eax")
     else:
-        output_code.append("\tmovl\t" + str(id_variables[split[2]]) + "(%rbp)" + ", %eax")
-    output_code.append("\tpopq\t%rbp")
+        output_code.append("\tmovl    " + str(id_variables[split[2]]) + "(%rbp)" + ", %eax")
+    output_code.append("\tpopq    %rbp")
     output_code.append("\tretq")
     return(id_value)
 
