@@ -287,7 +287,7 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
                         # Can pass constant directly
                         arg_list.append(__node_results[child.identifier])
 
-                builder.call(__ir_funcs[func_name], arg_list)
+                result = builder.call(__ir_funcs[func_name], arg_list)
             
             elif (iter_node.tag in __type_dict):
                 # Explicit variable declaration
@@ -556,8 +556,8 @@ def set_variable(value, var_name, func_locals, func_params, function, builder, g
                 __type_dict[var_type],
                 var_name + "_" + str(__variable_counter)
             )
-            print("New variable " + var_name + " found in symbol table")
-            print("Creating " + var_name + "_" + str(__variable_counter))
+            # print("New variable " + var_name + " found in symbol table")
+            # print("Creating " + var_name + "_" + str(__variable_counter))
             __variable_counter += 1
             operand = func_locals[var_name]
 
@@ -602,8 +602,8 @@ def get_variable(var_name, func_locals, func_params, function, builder, global_v
                 __type_dict[var_type],
                 var_name + "_" + str(__variable_counter)
             )
-            print("New variable " + var_name + " found in symbol table")
-            print("Creating " + var_name + "_" + str(__variable_counter))
+            # print("New variable " + var_name + " found in symbol table")
+            # print("Creating " + var_name + "_" + str(__variable_counter))
             __variable_counter += 1
             operand = func_locals[var_name]
 

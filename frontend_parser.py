@@ -58,7 +58,7 @@ def run_parser(tokens, grammar, look_for_brace=False, root_name="program", clear
     return [tree, num_tokens_to_skip, __symbol_tables]
 
 
-def help_func_manager(result, grammar, tokens):
+def help_func_manager(result, grammar, tokens, function=None):
     # if (#is preprocessor):
     #     return (None, #something)
 
@@ -73,7 +73,7 @@ def help_func_manager(result, grammar, tokens):
     if (result[1][0] == "iterationStmt"):
         return help_func_iterationStmt(grammar, tokens)
     if (result[1][0] == "returnStmt"):
-        return help_func_return(grammar, tokens)
+        return help_func_return(grammar, tokens, function=function)
     # ERROR CASE
     print("Did not account for case: " + result[1][0])
     print("Tokens:", tokens)
@@ -107,20 +107,20 @@ def help_func_iterationStmt(grammar, tokens):
     tree.add_node(Node(tag="Placeholder Iterationt"), parent=None)
     return [tree, 0]
 
-def help_func_return(grammar, tokens):
+def help_func_return(grammar, tokens, function=None):
     tree = Tree()
     return_node = Node(tag=tokens[0][1])
     tree.add_node(return_node, parent=None)
 
     skip_tokens = 0
     if (tokens[1][0] != ';') :
-        expr_help_out = help_func_expression(grammar, tokens[1:])
+        expr_help_out = help_func_expression(grammar, tokens[1:], function=function)
         tree.paste(return_node.identifier, expr_help_out[0])
         skip_tokens = expr_help_out[1]
         
     return [tree, skip_tokens + 2]
 
-def help_func_expression(grammar, tokens):
+def help_func_expression(grammar, tokens, function=None):
 
     tokens_skip = 0
     # Remove leading and trailing ( and )
@@ -230,12 +230,11 @@ def help_func_expression(grammar, tokens):
 
             func_params = []
             for i in range(len(split_points)-1):
-                print([split_points[i], split_points[i+1]])
+                # print([split_points[i], split_points[i+1]])
                 func_params.append(tokens[split_points[i]:split_points[i+1]])
 
             # Add parameters to tree
             for p in func_params:
-                print("Parameter:", p)
                 # Needs to call expression handler to evaluate parameters
                 # - Currently, operators in function calls are lower prec than the function for some reason
                 # - Exceptions caused by nesting function calls
@@ -254,12 +253,21 @@ def help_func_expression(grammar, tokens):
                 tokens[0][1] == "ID"
             )
         ):
-            # Expression is a constant or named variable
-            tokens_skip += 1
-            tree = Tree()
-            value_node = Node(tag=tokens[0][0])
-            tree.add_node(value_node, parent=None)
-            return [tree, tokens_skip]
+            # Check for no-parameter function
+            if (tokens[0][0] in __symbol_tables.keys()):
+                # Found a function call without parameters
+                tokens_skip += 1
+                tree = Tree()
+                value_node = Node(tag="func:"+tokens[0][0])
+                tree.add_node(value_node, parent=None)
+                return [tree, tokens_skip]
+            else:
+                # Expression is a constant or named variable
+                tokens_skip += 1
+                tree = Tree()
+                value_node = Node(tag=tokens[0][0])
+                tree.add_node(value_node, parent=None)
+                return [tree, tokens_skip]
         else:
             raise Exception("Unknown token sequence: " + str(tokens))
 
@@ -288,14 +296,14 @@ def help_func_expression(grammar, tokens):
             break
 
     if (len(tokens_l) > 0 and has_tokens_l):
-        expr_l = help_func_expression(grammar, tokens_l)
+        expr_l = help_func_expression(grammar, tokens_l, function=function)
         tree.paste(op_node.identifier, expr_l[0])
         tokens_skip += expr_l[1]
     else:
         tokens_skip += len(tokens_l)
 
     if (len(tokens_r) > 0 and has_tokens_r):
-        expr_r = help_func_expression(grammar, tokens_r)
+        expr_r = help_func_expression(grammar, tokens_r, function=function)
         tree.paste(op_node.identifier, expr_r[0])
         tokens_skip += expr_r[1]
     else:
@@ -441,7 +449,7 @@ def help_func_block(grammar, tokens, root_name="block", function=None):
             if (first_bracket < 0):
                 raise Exception(tokens[i][0] + " without body '{' on line " + str(tokens[i][2]))
 
-            cond_result = help_func_expression(grammar, tokens[i+2:first_bracket-1])
+            cond_result = help_func_expression(grammar, tokens[i+2:first_bracket-1], function=function)
             body_result = help_func_block(grammar, tokens[first_bracket+1:], root_name="condition_body", function=function)
 
             # Increment i, num_tokens_to_skip, and front_index
@@ -459,7 +467,7 @@ def help_func_block(grammar, tokens, root_name="block", function=None):
             tree.paste(if_node.identifier, body_result[0])
 
         elif (tokens[i][0] == "return"):
-            result = help_func_return(grammar, tokens[i:])
+            result = help_func_return(grammar, tokens[i:], function=function)
             front_index += result[1]
             i += result[1]
             num_tokens_to_skip += result[1]
@@ -501,7 +509,7 @@ def help_func_block(grammar, tokens, root_name="block", function=None):
                     tmp_tree.add_node(tmp_tree_root, parent=None)
                     tmp_tree.add_node(Node(tag=var_name), parent=tmp_tree_root)
 
-                result = help_func_expression(grammar, expr_tokens)
+                result = help_func_expression(grammar, expr_tokens, function=function)
                 
                 if (func_flag == 1):
                     result[1] += 1

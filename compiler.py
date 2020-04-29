@@ -106,7 +106,7 @@ def main(args=None):
                         opt_print_ir    # Command line arg: print IR out
                     )
                     code_source = optimizer.run_optimizer(code_ir)
-                    code_source = backend.run_backend(code_ir)
+                    # code_source = backend.run_backend(code_ir)
                     # !! END MAIN COMPILER FUNCTIONALITY !!
 
                     # Write compiled file to disk

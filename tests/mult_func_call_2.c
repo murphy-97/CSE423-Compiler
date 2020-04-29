@@ -23,6 +23,6 @@ int main(void)
   a = func_dec_2(1, 2, 3, 4, 5, 6, 7, 8, 9);
   x = 2;
   y = 3;
-  y = func_dec_3();
+  a = func_dec_3();
   return 0;
 }
