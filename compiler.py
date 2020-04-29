@@ -35,6 +35,7 @@ def main(args=None):
     opt_print_scn = False   # Print scanner output in run_frontend()
     opt_print_prs = False   # Print parser output in run_frontend()
     opt_print_ir = False    # Print IR output in run_frontend()
+    opt_print_opt = False   # Print optimizer output in this function
 
     try:
         # Omit first argument (module name) by list slice
@@ -48,7 +49,8 @@ def main(args=None):
                 # Print statement options
                 "p-scn",        # Print scanner output
                 "p-prs",        # Print parser output
-                "p-ir"          # Print IR output
+                "p-ir",         # Print IR output
+                "p-opt"         # Print optimizer output
             ]
         )
     except getopt.GetoptError:
@@ -74,6 +76,9 @@ def main(args=None):
 
         elif opt == '--p-ir':
             opt_print_ir = True
+
+        elif opt == '--p-opt':
+            opt_print_opt = True
 
     # Require input file
     if not i_file:
@@ -105,8 +110,15 @@ def main(args=None):
                         opt_print_prs,  # Command line arg: print parser out
                         opt_print_ir    # Command line arg: print IR out
                     )
-                    code_source = optimizer.run_optimizer(code_ir)
-                    # code_source = backend.run_backend(code_ir)
+
+                    print('\nOptimizing...')
+                    code_ir = optimizer.run_optimizer(code_ir)
+
+                    if (opt_print_opt):
+                        print("====== OPTIMZED IR OUTPUT ===========")
+                        print(code_ir)
+
+                    code_source = backend.run_backend(code_ir)
                     # !! END MAIN COMPILER FUNCTIONALITY !!
 
                     # Write compiled file to disk
