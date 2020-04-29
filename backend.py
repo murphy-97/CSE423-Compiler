@@ -118,6 +118,12 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
             # print("ret:", i)
             found_return_flag = 1
             fparams = rgrab_params(raw_code[i], id_variables, id_value, output_code)
+
+        elif ("call" in raw_code[i]):
+            # print("ret:", i)
+            found_return_flag = 1
+            fparams = cgrab_params(raw_code[i], id_variables, id_value, output_code)
+
         else:
             print("Error: command found in ir with unknown command")
             print(raw_code[i])
@@ -132,6 +138,57 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
     # new_code.insert(0, "\n.p2align")
     return output_code
 
+def cgrab_params(code_line, id_variables, id_value, output_code):
+    print("HANNAH I just wrote this quickly and it is broken: you can fix/rewrite it easily")
+    #make sure order is correct for operands
+    new_id_value = id_value
+    variables = []
+    split = code_line.replace(",", "")
+    split = split.replace("\t", "")
+    split = split.split(" ")
+    div_flag = 0
+
+    registers = ["%edi", "%esi", "%edx", "%ecx", "r8d", "r9d"]
+    cur_reg = 0
+
+    print("values: ", split[0])
+    print("len: ", len(split))
+
+    #HANNAH: you can prob account for no parameters here by just having a if statemnt capturing most of this
+
+    print ("HANNAH take into account more than 6 variables if i did not")
+
+    for i in range (0, int((len(split) - 6)/2), 2):
+        #check for cur_reg > 5
+        #check for it here like i did before
+        if (split[4].find("\"") != -1): #is a constant
+            string = "\tmovl\t" + registers[cur_reg] + ", $" + split[6 + i + 1]
+        else: #is a constant
+            string = "\tmovl\t" + registers[cur_reg] + ", " + str(id_variables[split[6 + i + 1]])
+        cur_reg += 1
+        output_code.append(string) ## parameters begin at 6 and account for off by 1
+    tmp = split[6 + i+1 + 2][:len(split[6 + i+1 + 2])-1]
+    if (cur_reg < 5):
+        if (tmp.find("\"") != -1): #is a constant
+            string = "\tmovl\t" + registers[cur_reg] + ", " + str(id_variables[tmp])
+        else: #is a var
+            string = "\tmovl\t" + registers[cur_reg] + ", $" + tmp
+        #still room in registers]
+    else:
+        print ("HANNAH take into account more than 6 variables if i did not")
+    output_code.append(string)
+
+    print("HANNAH: put in a jump here")
+
+    # if (tmp.find("\"") != -1): #is a variable
+    #     string = "\tmovl\t" + registers[cur_reg] + ", " + str(id_variables[split[4]])
+    # else: #is a constant
+    #     string = "\tmovl\t" + registers[cur_reg] + ", $" + split[6 + i+1]
+    # cur_reg += 1
+
+    return(new_id_value)
+
+
 def id_params(fun_parameters, output_code):
     output = {}
     mapping = ["%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"]
@@ -144,6 +201,8 @@ def id_params(fun_parameters, output_code):
     i = -4
 
     for elem in fun_parameters:
+        print ("HANNAH take into account more than 6 variables")
+
         if (mapping_elem < 6):
             output_code.append("\tmovl\t" + mapping[mapping_elem] + ", "+ str(i) + "(%rbp)")
             mapping_elem += 1
@@ -197,7 +256,6 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
     output_code.append("\tmovl\t%eax"  + ", " + str(id_variables[split[0]]) + "(%rbp)")
     return(new_id_value)
 
-print("THERE IS A EXTRA DOLLAR SIGN")
 def sgrab_params(code_line, id_variables, id_value, output_code):
     print("ID VAR: ", id_variables)
     new_id_value = id_value
