@@ -259,7 +259,10 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
 
     if (div_flag):
         output_code.append("\tcltd")
-        output_code.append("\t" + asm_fun_call + str(id_variables[split[5]]) + "(%rbp)")
+        if (split[5].find("\"") != -1):
+            output_code.append("\t" + asm_fun_call + str(id_variables[split[5]]) + "(%rbp)")
+        else: #constant
+            output_code.append("\t" + asm_fun_call + "$" + split[5])
 
     else:
         if (split[5].find("\"") != -1):
