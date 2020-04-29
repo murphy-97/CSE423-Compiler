@@ -119,6 +119,7 @@ def main(args=None):
                         print(code_ir)
 
                     code_source = backend.run_backend(code_ir)
+                    print(code_source)
                     # !! END MAIN COMPILER FUNCTIONALITY !!
 
                     # Write compiled file to disk

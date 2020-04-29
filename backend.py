@@ -1,11 +1,16 @@
 # CSE423 Compilers
 # backend.py: backend systems for C-to-ASM compiler implemented in Python
 
+__var_adrs = {}     # Stores addresses allocated by the store command
+
 ### Main method for backend module
 def run_backend(code_lines):
     """Takes a list of code lines and returns a list of processed code lines"""
     # TO DO: Implement backend
     print("\nBuilding ASM...")
+
+    global __var_adrs
+    __var_adrs = {}
 
     #bein line number function
     fun_body_lines = []
@@ -17,8 +22,6 @@ def run_backend(code_lines):
     def_lines = tmp[0]
     fun_body_lines = tmp[1]
     output_code = []
-
-    print(code_lines)
 
     # print("BODY LINES")
     # print(fun_body_lines)
@@ -77,6 +80,7 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
     #loop though lines appending them to output_code
     print("\n\CODE FOR FUNCTION")
     for i in range(1, len(raw_code)):
+
         if ("fadd" in raw_code[i]):
             # print("fadd:", i)
             id_value = fgrab_params(raw_code[i], id_variables, id_value, output_code)
@@ -114,6 +118,11 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
             # print("Id Variables: ", id_variables)
             # print("Line of code: ", raw_code[i])
 
+        elif ("load" in raw_code[i]):
+            # print("load:", i)
+            found_return_flag = 0
+            id_value = lgrab_params(raw_code[i], id_variables, id_value, output_code)
+
         elif ("ret" in raw_code[i]):
             # print("ret:", i)
             found_return_flag = 1
@@ -125,9 +134,7 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
             fparams = cgrab_params(raw_code[i], id_variables, id_value, output_code)
 
         else:
-            print("Error: command found in ir with unknown command")
-            print(raw_code[i])
-            exit(1)
+            raise Exception("Unknown command found in IR:\n" + str(raw_code[i]))
 
     #call function to do rest
 
@@ -220,44 +227,91 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
     split = split.split(" ")
     div_flag = 0
 
-    asm_fun_call = "TMP"
+    asm_fun_call = None
     if (split[2] == "fadd"):
-        asm_fun_call = "add"
-    if (split[2] == "fsub"):
-        asm_fun_call = "sub"
-    if (split[2] == "fmul"):
-        asm_fun_call = "imul"
-    if (split[2] == "fdiv"):
-        asm_fun_call = "idivl"
+        asm_fun_call = "add     "
+    elif (split[2] == "fsub"):
+        asm_fun_call = "sub     "
+    elif (split[2] == "fmul"):
+        asm_fun_call = "imul    "
+    elif (split[2] == "fdiv"):
+        asm_fun_call = "idivl   "
         div_flag = 1
+    if (asm_fun_call is None):
+        raise Exception("Unknown fp operation '" + split[2] + "' in IR")
 
     if (split[0] not in id_variables and "\"" in split[0]):
         id_variables[split[0]] = new_id_value
         new_id_value -= 4
+
     if (split[4] not in id_variables and "\"" in split[4]):
         id_variables[split[4]] = new_id_value
         new_id_value -= 4
+
     if (split[5] not in id_variables and "\"" in split[5]):
         id_variables[split[5]] = new_id_value
         new_id_value -= 4
+
     if (split[4].find("\"") != -1):
-        output_code.append("\tmovl\t" + str(id_variables[split[4]]) + "(%rbp)" + ", %eax")
+        output_code.append("\tmovl    " + str(id_variables[split[4]]) + "(%rbp)" + ", %eax")
+
     else: #constant
-        output_code.append("\tmovl\t$" + split[4] + ", %eax")
+        output_code.append("\tmovl    $" + split[4] + ", %eax")
+
     if (div_flag):
         output_code.append("\tcltd")
-        output_code.append("\t" + asm_fun_call + "\t" + str(id_variables[split[5]]) + "(%rbp)")
+        output_code.append("\t" + asm_fun_call + str(id_variables[split[5]]) + "(%rbp)")
+
     else:
         if (split[5].find("\"") != -1):
-            output_code.append("\t" + asm_fun_call + "\t\t" + str(id_variables[split[5]]) + "(%rbp)" + ", %eax")
+            output_code.append("\t" + asm_fun_call + str(id_variables[split[5]]) + "(%rbp)" + ", %eax")
+
         else:#constant
-            output_code.append("\t" + asm_fun_call + "\t\t$" + split[5] + ", %eax")
+
+            output_code.append("\t" + asm_fun_call + "$" + split[5] + ", %eax")
+
     assert(split[0].find("\"") != -1)
-    output_code.append("\tmovl\t%eax"  + ", " + str(id_variables[split[0]]) + "(%rbp)")
+    output_code.append("\tmovl    %eax"  + ", " + str(id_variables[split[0]]) + "(%rbp)")
+    return(new_id_value)
+
+def lgrab_params(code_line, id_variables, id_value, output_code):
+    print("Load is a work in progress")
+
+    global __var_adrs
+    
+    new_id_value = id_value
+    variables = []
+    split = code_line.replace(",", "")
+    split = split.replace("\t", "")
+    split = split.split(" ")
+
+    print("ID VARS", id_variables)
+
+    var_name = split[5]
+
+    if (var_name not in __var_adrs):
+        raise Exception("IR loading unknown variable '" + var_name + "'")
+
+    if (split[0] not in id_variables and "\"" in split[0]):
+        id_variables[split[0]] = new_id_value
+        new_id_value -= 4
+
+    adrs_src = __var_adrs[var_name]
+    adrs_dst = str(id_variables[split[0]]) + "(%rbp)"
+    code_line = "Load " + var_name + " from " + adrs_src + " into " + adrs_dst
+    output_code.append("\tmovl    " + adrs_src + ", " + "%eax")
+    output_code.append("\tmovl    " + "%eax" + ", " + adrs_dst)
+
     return(new_id_value)
 
 def sgrab_params(code_line, id_variables, id_value, output_code):
-    print("ID VAR: ", id_variables)
+
+    global __var_adrs
+
+    var_name = ""
+    address = ""
+
+    # print("ID VAR: ", id_variables)
     new_id_value = id_value
     variables = []
     split = code_line.replace(",", "")
@@ -273,14 +327,20 @@ def sgrab_params(code_line, id_variables, id_value, output_code):
     if (split[4] not in id_variables and "\"" in split[4]):
         id_variables[split[4]] = new_id_value
         if (split[2].find("\"") == -1):
-            output_code.append("\tmovl\t$" + split[2] + ", " + str(id_variables[split[4]]) + "(%rbp)")
+            var_name = split[4]
+            address = str(id_variables[split[4]]) + "(%rbp)"
+            output_code.append("\tmovl    $" + split[2] + ", " + address)
         else:
-            output_code.append("\tmovl\t" + str(id_variables[split[2]]) + "(%rbp)" + ", " + "%eax")
-            output_code.append("\tmovl\t" + "%eax" + ", " + str(id_variables[split[4]]) + "(%rbp)")
+            var_name = split[4]
+            address = str(id_variables[split[4]]) + "(%rbp)"
+            output_code.append("\tmovl    " + str(id_variables[split[2]]) + "(%rbp)" + ", " + "%eax")
+            output_code.append("\tmovl    " + "%eax" + ", " + address)
             # output_code.append("\tmovl\t" + split[2] + ", " + str(id_variables[split[2]]) + "(%rbp)")
         # output_code.append("\tmovl from set" + split[4])
         new_id_value -= 4
     # output_code.append("\tmovl\t$" + split[2] + ", %eax")
+    __var_adrs[var_name] = address
+    print("Storing " + var_name + " in " + address)
     return(new_id_value)
 
 def rgrab_params(code_line, id_variables, id_value, output_code):
