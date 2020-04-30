@@ -2,6 +2,7 @@
 # backend.py: backend systems for C-to-ASM compiler implemented in Python
 
 __var_adrs = {}     # Stores addresses allocated by the store command
+__cmp_count = 0     # Used to name jump labels in comparisons
 INIT_VARS_TO_ZERO = True
 
 ### Main method for backend module
@@ -12,6 +13,8 @@ def run_backend(code_lines):
 
     global __var_adrs
     __var_adrs = {}
+    global __cmp_count
+    __cmp_count = 0
 
     #bein line number function
     fun_body_lines = []
@@ -136,16 +139,21 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
         elif ("icmp" in raw_code[i]):
             # print("icmp", i)
             found_return_flag = 0
-            #id_value = cmpgrab_params(raw_code[i], id_variables, id_value, output_code)
-            output_code.append("\tCOMPARISON")
+            id_value = cmpgrab_params(raw_code[i], id_variables, id_value, output_code)
 
         elif ("br" in raw_code[i]):
             # print("br", i)
-            output_code.append("\tBRANCH")
+            found_return_flag = 0
+            id_value = jmpgrab_params(raw_code[i], id_variables, id_value, output_code)
 
         elif (raw_code[i].strip()[0:6] == "block_"):
             # Create label
             output_code.append("." + raw_code[i].strip())
+
+        elif ("zext" in raw_code[i]):
+            # Type conversion required for LLVM but not assembly
+            # Required because comparison is i1 and values are i32
+            pass
 
         else:
             raise Exception("Unknown command found in IR:\n" + str(raw_code[i]))
@@ -361,32 +369,118 @@ def sgrab_params(code_line, id_variables, id_value, output_code):
     return(new_id_value)
 
 def cmpgrab_params(code_line, id_variables, id_value, output_code):
-    print("Comparisons are a work in progress")
+
+    global __cmp_count
+
     new_id_value = id_value
     variables = []
     split = code_line.replace(",", "")
     split = split.replace("\t", "")
     split = split.split(" ")
 
-    var_name = split[5]
+    asm_fun_call = None
+    if (split[3] == "sgt"):
+        asm_fun_call = "jgt     "
+    elif (split[3] == "slt"):
+        asm_fun_call = "jlt     "
+    elif (split[3] == "sge"):
+        asm_fun_call = "jge     "
+    elif (split[3] == "sle"):
+        asm_fun_call = "jle     "
+    elif (split[3] == "eq"):
+        asm_fun_call = "je      "
+    elif (split[3] == "ne"):
+        asm_fun_call = "jne     "
 
-    if (var_name not in __var_adrs):
-        if (INIT_VARS_TO_ZERO):
-            print("WARNING: '" + var_name + "' used uninitialized. Setting value to 0")
-            adrs_src = "$0"
-        else:
-            raise Exception("IR loading unitialized variable '" + var_name + "'")
-    else:
-        adrs_src = __var_adrs[var_name]
+    if (asm_fun_call is None):
+        raise Exception("Unknown rel operation '" + split[3] + "' in IR")
 
+    # Allocate variables on stack
     if (split[0] not in id_variables and "\"" in split[0]):
         id_variables[split[0]] = new_id_value
         new_id_value -= 4
 
-    adrs_dst = str(id_variables[split[0]]) + "(%rbp)"
-    code_line = "Load " + var_name + " from " + adrs_src + " into " + adrs_dst
-    output_code.append("\tmovl    " + adrs_src + ", " + "%eax")
-    output_code.append("\tmovl    " + "%eax" + ", " + adrs_dst)
+    if (split[5] not in id_variables and "\"" in split[5]):
+        id_variables[split[5]] = new_id_value
+        new_id_value -= 4
+
+    if (split[6] not in id_variables and "\"" in split[6]):
+        id_variables[split[6]] = new_id_value
+        new_id_value -= 4
+
+    # Define constants versus variables
+    if (split[5].find("\"") != -1):
+        split[5] = str(id_variables[split[5]]) + "(%rbp)"
+    else: #constant
+        split[5] = "$" + split[5]
+
+    if (split[6].find("\"") != -1):
+        split[6] = str(id_variables[split[6]]) + "(%rbp)"
+    else: #constant
+        split[6] = "$" + split[6]
+
+    # Assert that command starts with a variable and not a constant
+    assert(split[0].find("\"") != -1)
+
+    # Create labels
+    label_1 = ".cmp_" + str(__cmp_count) + "_1"
+    label_2 = ".cmp_" + str(__cmp_count) + "_2"
+    __cmp_count += 1
+
+    # Construct comparison
+    #   For == use:
+    #       cmp     b, c
+    #       je      .cmp_1_1
+    #       movl    $0, %eax
+    #       jmp     .cmp_1_2
+    #    .cmp_1_1:
+    #       movl    $1, %eax
+    #    .cmp_1_2:
+    #       movl    %eax, a
+    output_code.append("\tcmp     " + split[5] + ", " + split[6])
+    output_code.append("\t" + asm_fun_call + label_1)
+    output_code.append("\tmovl    $0, %eax")
+    output_code.append("\tjmp     " + label_2)
+    output_code.append(label_1 + ":")
+    output_code.append("\tmovl    $1, %eax")
+    output_code.append(label_2 + ":")
+    output_code.append("\tmovl    %eax, " + str(id_variables[split[0]]) + "(%rbp)")
+
+    return(new_id_value)
+
+def jmpgrab_params(code_line, id_variables, id_value, output_code):
+
+    global __cmp_count
+
+    print("cmpgrab comparisons are a work in progress")
+    new_id_value = id_value
+    variables = []
+    split = code_line.replace(",", "")
+    split = split.replace("\t", "")
+    split = split.split(" ")
+
+    # Example:
+    # 0  1  2      3     4           5     6
+    # br i1 %".5", label %"block_0", label %"block_1"
+    #    cmp     %".5", $0
+    #    jne     block_0
+    #    jmp     block_1
+
+    # Allocate variables on stack
+    if (split[2] not in id_variables and "\"" in split[2]):
+        id_variables[split[2]] = new_id_value
+        new_id_value -= 4
+
+    # Define constants versus variables
+    if (split[2].find("\"") != -1):
+        split[2] = str(id_variables[split[2]]) + "(%rbp)"
+    else: #constant
+        split[2] = "$" + split[2]
+
+    # Construct branch
+    output_code.append("\tcmp     " + split[0] + ", $0")
+    output_code.append("\tjne     ." + split[4][2:-1])
+    output_code.append("\tjmp     ." + split[6][2:-1])
 
     return(new_id_value)
 
