@@ -133,6 +133,10 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
             found_return_flag = 1
             fparams = cgrab_params(raw_code[i], id_variables, id_value, output_code)
 
+        elif (raw_code[i].strip()[0:6] == "block_"):
+            # Create label
+            output_code.append("." + raw_code[i].strip())
+
         else:
             raise Exception("Unknown command found in IR:\n" + str(raw_code[i]))
 
