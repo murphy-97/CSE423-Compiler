@@ -114,6 +114,16 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
             found_return_flag = 0
             id_value = fgrab_params(raw_code[i], id_variables, id_value, output_code)
 
+        elif ("shl" in raw_code[i]):
+            # print("frem:", i)
+            found_return_flag = 0
+            id_value = fgrab_params(raw_code[i], id_variables, id_value, output_code)
+
+        elif ("ashr" in raw_code[i]):
+            # print("frem:", i)
+            found_return_flag = 0
+            id_value = fgrab_params(raw_code[i], id_variables, id_value, output_code)
+
         elif ("store" in raw_code[i]):
             # print("store:", i)
             found_return_flag = 0
@@ -256,6 +266,10 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
         asm_fun_call = "sub     "
     elif (split[2] == "fmul"):
         asm_fun_call = "imul    "
+    elif (split[2] == "shl"):
+        asm_fun_call = "shl     "
+    elif (split[2] == "ashr"):
+        asm_fun_call = "sar     "
     elif (split[2] == "fdiv"):
         asm_fun_call = "idivl   "
         div_flag = 1

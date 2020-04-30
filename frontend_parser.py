@@ -150,17 +150,18 @@ def help_func_expression(grammar, tokens, function=None):
     # Find the lowest precedence operator
     lowest_prec_op = []
     op_precedence = {
-        "&&":    50,
-        "||":    40,
-        "mulop": 30,
-        "sumop": 20,
-        "relop": 10,
-        "=": 0,
-        "+=": 0,
-        "-=": 0,
-        "*=": 0,
-        "\=": 0,
-        "%=": 0,
+        "&&":      50,
+        "||":      40,
+        "shiftop": 35,
+        "mulop":   30,
+        "sumop":   20,
+        "relop":   10,
+        "=":       0,
+        "+=":      0,
+        "-=":      0,
+        "*=":      0,
+        "\=":      0,
+        "%=":      0
     }
 
     for token in tokens:

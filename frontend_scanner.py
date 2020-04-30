@@ -127,6 +127,8 @@ def run_scanner(code_lines):
             tokens_descriptive.append([token, "!", line_counter])
         elif (token in ["?"]):
             tokens_descriptive.append([token, "unaryop", line_counter])
+        elif (token in ["<<", ">>"]):
+            tokens_descriptive.append([token, "shiftop", line_counter])
         elif (token in ["*", "/", "%"]):
             tokens_descriptive.append([token, "mulop", line_counter])
         elif (token in ["<=", "<", ">", ">=", "==", "!="]):
