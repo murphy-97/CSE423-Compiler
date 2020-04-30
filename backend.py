@@ -178,52 +178,63 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
     return output_code
 
 def cgrab_params(code_line, id_variables, id_value, output_code):
-    print("HANNAH I just wrote this quickly and it is broken: you can fix/rewrite it easily")
     #make sure order is correct for operands
     new_id_value = id_value
     variables = []
     split = code_line.replace(",", "")
+    split = split.replace("(", " ")
+    split = split.replace(")",  " ")
     split = split.replace("\t", "")
+    split = split.strip()
     split = split.split(" ")
     div_flag = 0
 
+    print("SPLIT:", split)
+    result = split[0]
+    func_name = "_" + split[4][2:-1]
+    params = split[6::2]        # Pulls out all parameter values, no types
+
     registers = ["%edi", "%esi", "%edx", "%ecx", "r8d", "r9d"]
     cur_reg = 0
+    esp_off = -28
 
-    print("values: ", split[0])
-    print("len: ", len(split))
+    # Make sure result is on stack and setup result address
+    if (result not in id_variables and "\"" in result):
+        id_variables[result] = new_id_value
+        new_id_value -= 4
+    assert("\"" in result)  # Must be assigning to a variable, not a constant!
+    result_adrs = str(id_variables[result]) + "(%rbp)"
 
-    #HANNAH: you can prob account for no parameters here by just having a if statemnt capturing most of this
+    # Place params in registers and on stack
+    output_code.append("; storing parameters for call of " + func_name)
+    for p in params:
+        
+        # Check if parameter is in id_variables
+        if (p not in id_variables and "\"" in p):
+            raise Exception("Unkown variable '" + p + "' in function call")
 
-    print ("HANNAH take into account more than 6 variables if i did not")
+        # Determine source of param
+        if (p.find("\"") != -1):
+            source = str(id_variables[p]) + "(%rbp)"
+        else: #constant
+            source = "$" + p
 
-    for i in range (0, int((len(split) - 6)/2), 2):
-        #check for cur_reg > 5
-        #check for it here like i did before
-        if (split[4].find("\"") != -1): #is a constant
-            string = "\tmovl    " + registers[cur_reg] + ", $" + split[6 + i + 1]
-        else: #is a constant
-            string = "\tmovl    " + registers[cur_reg] + ", " + str(id_variables[split[6 + i + 1]])
+        # Determine destination address for storing parameters
+        if (cur_reg < len(registers)):
+            dest = registers[cur_reg]
+        else:
+            dest = str(esp_off) + "(%esp)"
+            esp_off -= 4
         cur_reg += 1
-        output_code.append(string) ## parameters begin at 6 and account for off by 1
-    tmp = split[6 + i+1 + 2][:len(split[6 + i+1 + 2])-1]
-    if (cur_reg < 5):
-        if (tmp.find("\"") != -1): #is a constant
-            string = "\tmovl    " + registers[cur_reg] + ", " + str(id_variables[tmp])
-        else: #is a var
-            string = "\tmovl    " + registers[cur_reg] + ", $" + tmp
-        #still room in registers]
-    else:
-        print ("HANNAH take into account more than 6 variables if i did not")
-    output_code.append(string)
 
-    print("HANNAH: put in a jump here")
+        # Place variable in register or on stack
+        output_code.append("\tmovl    " + source + ", " + dest)
 
-    # if (tmp.find("\"") != -1): #is a variable
-    #     string = "\tmovl\t" + registers[cur_reg] + ", " + str(id_variables[split[4]])
-    # else: #is a constant
-    #     string = "\tmovl\t" + registers[cur_reg] + ", $" + split[6 + i+1]
-    # cur_reg += 1
+    # Call function
+    output_code.append("\tcall    " + func_name)
+    # Store result
+    output_code.append("\tmovl    %eax, " + result_adrs)
+    output_code.append("; end call of " + func_name)
 
     return(new_id_value)
 
@@ -240,6 +251,7 @@ def id_params(fun_parameters, output_code):
     i = -4
 
     for elem in fun_parameters:
+        # I think it does...
         print ("HANNAH take into account more than 6 variables")
 
         if (mapping_elem < 6):

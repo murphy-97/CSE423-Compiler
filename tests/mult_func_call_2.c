@@ -6,7 +6,7 @@ int func_dec(int a, int b, int c, int d)
 
 int func_dec_2(int a, int b, int c, int aa, int ba, int ca, int as, int bs, int cs)
 {
-	return 0;
+	return a + b + c + aa + ba + ca + as + bs + cs;
 }
 
 int func_dec_3()
