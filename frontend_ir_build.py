@@ -137,8 +137,8 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
 
     # Begin reverse level order traversal of parse tree
 
-    bin_ops = ['=', '+', '-', '*', '/', '%', '&&', '||', '<', '>', "<=",
-        '>=', '==', '+=', '-=', '*=', '/=', '<<', '>>']
+    bin_ops = ['=', '+', '-', '*', '/', '%', '&&', '||', '<', '>', "<=", '>=',
+        '==', '!=', '+=', '-=', '*=', '/=', '<<', '>>']
     una_ops = ['++', '--']
 
     while (len(node_stack) > 0):

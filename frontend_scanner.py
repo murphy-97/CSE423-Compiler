@@ -52,6 +52,8 @@ def run_scanner(code_lines):
     entire_doc = entire_doc.replace("==", "$equals$")
     entire_doc = entire_doc.replace("<<", "$left$")
     entire_doc = entire_doc.replace(">>", "$right$")
+    entire_doc = entire_doc.replace("<=", "$lesseq$")
+    entire_doc = entire_doc.replace(">=", "$greateq$")
 
     # add spaces arround all individual tokens for formating
     for value in replace_space_array:
@@ -82,6 +84,8 @@ def run_scanner(code_lines):
     entire_doc = entire_doc.replace("$equals$", " == ")
     entire_doc = entire_doc.replace("$left$", " << ")
     entire_doc = entire_doc.replace("$right$", " >> ")
+    entire_doc = entire_doc.replace("$lesseq$", " <= ")
+    entire_doc = entire_doc.replace("$greateq$", " >= ")
 
     # remove extra spaces
     entire_doc = ' '.join(entire_doc.split())

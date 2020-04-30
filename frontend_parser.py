@@ -152,9 +152,9 @@ def help_func_expression(grammar, tokens, function=None):
     op_precedence = {
         "&&":    50,
         "||":    40,
-        "relop": 30,
-        "mulop": 20,
-        "sumop": 10,
+        "mulop": 30,
+        "sumop": 20,
+        "relop": 10,
         "=": 0,
         "+=": 0,
         "-=": 0,

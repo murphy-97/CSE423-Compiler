@@ -158,7 +158,9 @@ def usage():
         " -h       Prints usage statement\n" +
         " --p-scn  Prints scanner output\n" +
         " --p-prs  Prints parser output\n" +
-        " --p-ir   Prints IR output"
+        " --p-ir   Prints IR output\n" +
+        " --p-opt  Prints optimized IR output\n" +
+        " --p-asm  Prints ASM output"
     )
 
     print("If no ouptut file is specified, output written is to 'input-file'.ASM")

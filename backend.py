@@ -129,9 +129,19 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
             fparams = rgrab_params(raw_code[i], id_variables, id_value, output_code)
 
         elif ("call" in raw_code[i]):
-            # print("ret:", i)
+            # print("call:", i)
             found_return_flag = 1
             fparams = cgrab_params(raw_code[i], id_variables, id_value, output_code)
+
+        elif ("icmp" in raw_code[i]):
+            # print("icmp", i)
+            found_return_flag = 0
+            #id_value = cmpgrab_params(raw_code[i], id_variables, id_value, output_code)
+            output_code.append("\tCOMPARISON")
+
+        elif ("br" in raw_code[i]):
+            # print("br", i)
+            output_code.append("\tBRANCH")
 
         elif (raw_code[i].strip()[0:6] == "block_"):
             # Create label
@@ -348,6 +358,36 @@ def sgrab_params(code_line, id_variables, id_value, output_code):
         new_id_value -= 4
     # output_code.append("\tmovl\t$" + split[2] + ", %eax")
     __var_adrs[var_name] = address
+    return(new_id_value)
+
+def cmpgrab_params(code_line, id_variables, id_value, output_code):
+    print("Comparisons are a work in progress")
+    new_id_value = id_value
+    variables = []
+    split = code_line.replace(",", "")
+    split = split.replace("\t", "")
+    split = split.split(" ")
+
+    var_name = split[5]
+
+    if (var_name not in __var_adrs):
+        if (INIT_VARS_TO_ZERO):
+            print("WARNING: '" + var_name + "' used uninitialized. Setting value to 0")
+            adrs_src = "$0"
+        else:
+            raise Exception("IR loading unitialized variable '" + var_name + "'")
+    else:
+        adrs_src = __var_adrs[var_name]
+
+    if (split[0] not in id_variables and "\"" in split[0]):
+        id_variables[split[0]] = new_id_value
+        new_id_value -= 4
+
+    adrs_dst = str(id_variables[split[0]]) + "(%rbp)"
+    code_line = "Load " + var_name + " from " + adrs_src + " into " + adrs_dst
+    output_code.append("\tmovl    " + adrs_src + ", " + "%eax")
+    output_code.append("\tmovl    " + "%eax" + ", " + adrs_dst)
+
     return(new_id_value)
 
 def rgrab_params(code_line, id_variables, id_value, output_code):
