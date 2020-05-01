@@ -535,7 +535,6 @@ def rgrab_params(code_line, id_variables, id_value, output_code):
     output_code.append("\tretq")
     return(id_value)
 
-print("Hannah: what is the difference between @ and % in variable names and do we need to worrry about it")
 def get_fun_name(input_line):
         begin_name_index = input_line.find("\"") + 1
         end_name_index = input_line.find("\"", begin_name_index+1, -1)
