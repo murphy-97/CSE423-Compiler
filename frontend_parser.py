@@ -465,8 +465,6 @@ def help_func_block(grammar, tokens, root_name="block", function=None):
             num_tokens_to_skip += if_skip
             front_index += if_skip
             i += if_skip
-            print("Pasting cond tree to", if_cond.identifier)
-            print("Pasting body tree to", if_node.identifier)
             tree.paste(if_cond.identifier, cond_result[0])
             tree.paste(if_node.identifier, body_result[0])
 
