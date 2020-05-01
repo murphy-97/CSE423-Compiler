@@ -268,6 +268,7 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
     split = split.replace("\t", "")
     split = split.split(" ")
     div_flag = 0
+    mod_flag = 0
 
     asm_fun_call = None
     if (split[2] == "fadd"):
@@ -281,8 +282,12 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
     elif (split[2] == "ashr"):
         asm_fun_call = "sar     "
     elif (split[2] == "fdiv"):
-        asm_fun_call = "idivl   "
+        asm_fun_call = "idiv    "
         div_flag = 1
+    elif (split[2] == "frem"):
+        asm_fun_call = "idiv    "
+        mod_flag = 1
+
     if (asm_fun_call is None):
         raise Exception("Unknown fp operation '" + split[2] + "' in IR")
 
@@ -309,6 +314,14 @@ def fgrab_params(code_line, id_variables, id_value, output_code):
             output_code.append("\t" + asm_fun_call + str(id_variables[split[5]]) + "(%rbp)")
         else: #constant
             output_code.append("\t" + asm_fun_call + "$" + split[5])
+
+    elif (mod_flag):
+        output_code.append("\tcdq")
+        if (split[5].find("\"") != -1):
+            output_code.append("\t" + asm_fun_call + str(id_variables[split[5]]) + "(%rbp)")
+        else: #constant
+            output_code.append("\t" + asm_fun_call + "$" + split[5])
+        output_code.append("\tmovl    %edx, %eax")
 
     else:
         if (split[5].find("\"") != -1):

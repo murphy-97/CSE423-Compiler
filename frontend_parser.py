@@ -436,16 +436,18 @@ def help_func_block(grammar, tokens, root_name="block", function=None):
 
         elif (tokens[i][0] in ["if", "while"]):
             if_node = Node(tag=tokens[i][0])
-            if_cond = Node(tag="condition")
-
             tree.add_node(if_node, parent=root_node)
+
+            if_cond = Node(tag="condition")
             tree.add_node(if_cond, parent=if_node)
 
             first_bracket = -1
             for token in tokens[i:]:
                 if (token[0] == '{'):
                     first_bracket = tokens.index(token)
+                    break
                 elif (token[0] == '}'):
+                    # Break to throw error if unmatched
                     break
             if (first_bracket < 0):
                 raise Exception(tokens[i][0] + " without body '{' on line " + str(tokens[i][2]))
@@ -463,7 +465,8 @@ def help_func_block(grammar, tokens, root_name="block", function=None):
             num_tokens_to_skip += if_skip
             front_index += if_skip
             i += if_skip
-
+            print("Pasting cond tree to", if_cond.identifier)
+            print("Pasting body tree to", if_node.identifier)
             tree.paste(if_cond.identifier, cond_result[0])
             tree.paste(if_node.identifier, body_result[0])
 
