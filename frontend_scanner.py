@@ -54,6 +54,11 @@ def run_scanner(code_lines):
     entire_doc = entire_doc.replace(">>", "$right$")
     entire_doc = entire_doc.replace("<=", "$lesseq$")
     entire_doc = entire_doc.replace(">=", "$greateq$")
+    entire_doc = entire_doc.replace("+", "$plus_sm$")
+    entire_doc = entire_doc.replace("-", "$minus_sm$")
+    entire_doc = entire_doc.replace("*", "$times_sm$")
+    entire_doc = entire_doc.replace("/", "$divide_sm$")
+    entire_doc = entire_doc.replace("%", "$mod_sm$")
 
     # add spaces arround all individual tokens for formating
     for value in replace_space_array:
@@ -86,6 +91,11 @@ def run_scanner(code_lines):
     entire_doc = entire_doc.replace("$right$", " >> ")
     entire_doc = entire_doc.replace("$lesseq$", " <= ")
     entire_doc = entire_doc.replace("$greateq$", " >= ")
+    entire_doc = entire_doc.replace("$plus_sm$", " + ")
+    entire_doc = entire_doc.replace("$minus_sm$", " - ")
+    entire_doc = entire_doc.replace("$times_sm$", " * ")
+    entire_doc = entire_doc.replace("$divide_sm$", " / ")
+    entire_doc = entire_doc.replace("$mod_sm$", " % ")
 
     # remove extra spaces
     entire_doc = ' '.join(entire_doc.split())
