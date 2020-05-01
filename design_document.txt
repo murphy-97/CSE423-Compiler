@@ -62,6 +62,20 @@ IR BUILDER:
   recursive reverse-level-order traversal of the abstract syntax tree. The IR
   builder adds instructions to blocks, blocks to functions, and functions to the
   overall module that contains the entire IR.
+
+ASM BUILDER (BACKEND):
+  The ASM builder reads in the IR line by line and checks. Most IR operations
+  translate very directly into assembly operations. For these cases, the builder
+  checks for the operation and then translates the line. The builder maintains
+  a dictionary matching IR variable names to assembly memory addresses (both as
+  registers and as stack offsets, depending on the context). For more complex
+  code structures, such as comparisons and branches, the ASM builder will pull
+  the necessary operations and parameters out of the IR and create more
+  complicated multiple-line pieces of code. Function calls are handled by
+  placing the first six parameters into passing registers and all remaining
+  parameters on the stack and then jumping to the function using assembly's
+  "call" operation. The callee function then pulls variables out of registers
+  and places them on the stack for use.
   
 === WHAT IS/IS NOT IMPLEMENTED =================================================
   
@@ -78,11 +92,9 @@ IR BUILDER:
     variable declaration:           complete
 
     function calling:               partial
-                                    - Supported if the function call is a single
-                                      value, either a variable or constant
-                                    - Not yet supported for multiple parameters,
-                                      expressions as parameters, or function
-                                      calls as parameters 
+                                    - Not supported for expressions as
+                                      parameters, or function calls as
+                                      parameters 
                                     - Function calls only support variables and
                                       constants as parameters. To pass the
                                       result of an expression or another
@@ -94,7 +106,7 @@ IR BUILDER:
     for statments:                  incomplete
     ++ --:                          incomplete
   
-  IR:
+  IR BUILDER:
     Function parsing:               complete
     Expression parsing:             complete
     while statements:               complete
@@ -103,8 +115,7 @@ IR BUILDER:
     return statemnts:               complete
     ++ --:                          complete
     
-    variable declaration:           complete(ish)
-                                    - Does not allow for initialization
+    variable declaration:           complete
 
     fuction prototypes:             incomplete
                                     (are they necessary at this stage?)
@@ -112,11 +123,16 @@ IR BUILDER:
     else statement:                 incomplete
 
     for statments:                  incomplete
-                                    (will be converted to while by parser)
+                                    (would be converted to while by parser)
 
     function calling:               complete(ish)
                                     - See parser section above for limitations
                                       on function calling
+
+ASM BUILDER:
+    Complete.
+    Limitations on parser and IR builder would not result in new IR patterns
+    that the ASM builder would not recognize and handle.
 
   MISC:
     comments:                       complete(ish)
@@ -133,3 +149,20 @@ IR BUILDER:
     Function parameters cannot be redefined via =, +=, -=, etc
     Local variables *can* be redefeind via =, +=, -=, etc
     parameter names cannot contain ")" or "("
+
+=== KNOWN BUGS & ISSUES ========================================================
+
+- Anything in between multiple line comments is ignored.
+
+  int main()
+  {
+    Not ignored
+    /* Correctly ignored */
+    Should not be ignored but is ignored
+    /* Correctly ignored */
+    Not ignored
+  }
+
+  This issue is due to our use of regex to detect multiple line comments and can
+  be corrected by replacing the regex with an interative search or use of string
+  methods.
