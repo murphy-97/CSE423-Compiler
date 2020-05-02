@@ -205,7 +205,7 @@ def cgrab_params(code_line, id_variables, id_value, output_code):
     result_adrs = str(id_variables[result]) + "(%rbp)"
 
     # Place params in registers and on stack
-    output_code.append("\t; storing parameters for call of " + func_name)
+    output_code.append("\t# storing parameters for call of " + func_name)
     for p in params:
         
         # Check if parameter is in id_variables
@@ -233,7 +233,7 @@ def cgrab_params(code_line, id_variables, id_value, output_code):
     output_code.append("\tcall    " + func_name)
     # Store result
     output_code.append("\tmovl    %eax, " + result_adrs)
-    output_code.append("\t; end call of " + func_name)
+    output_code.append("\t# end call of " + func_name)
 
     return(new_id_value)
 
@@ -254,7 +254,7 @@ def id_params(fun_parameters, output_code):
             output_code.append("\tmovl    " + mapping[mapping_elem] + ", "+ str(i) + "(%rbp)")
             mapping_elem += 1
         else:
-            output_code.append("\t; Parameter stored in " + str(output[elem]) + "(%rbp)")
+            output_code.append("\t# Parameter stored in " + str(output[elem]) + "(%rbp)")
         i -= 4
 
     return output
