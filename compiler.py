@@ -121,7 +121,8 @@ def main(args=None):
 
                     if (opt_print_opt):
                         print("====== OPTIMZED IR OUTPUT ==")
-                        print(code_ir)
+                        for line in code_ir:
+                            print(line)
 
                     code_source = backend.run_backend(code_ir)
                     if (opt_print_asm):
