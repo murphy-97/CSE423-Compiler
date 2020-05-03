@@ -13,7 +13,7 @@ import errors
 import traceback
 
 # Debug contstant for debug statements
-DEBUG = True
+DEBUG = False
 
 ### Main function for running this module
 def main(args=None):
@@ -52,7 +52,8 @@ def main(args=None):
                 "p-prs",        # Print parser output
                 "p-ir",         # Print IR output
                 "p-opt",        # Print optimizer output
-                "p-asm"         # Print backend output
+                "p-asm",        # Print backend output
+                "debug"         # Print stack traces for exceptions
             ]
         )
     except getopt.GetoptError:
@@ -84,6 +85,9 @@ def main(args=None):
 
         elif opt == '--p-asm':
             opt_print_asm = True
+
+        elif opt == '--debug':
+            DEBUG = True
 
     # Require input file
     if not i_file:
@@ -162,7 +166,8 @@ def usage():
         " --p-prs  Prints parser output\n" +
         " --p-ir   Prints IR output\n" +
         " --p-opt  Prints optimized IR output\n" +
-        " --p-asm  Prints ASM output"
+        " --p-asm  Prints ASM output\n" +
+        " --debug  Prints stack traces for raised exceptions"
     )
 
     print("If no ouptut file is specified, output written is to 'input-file'.ASM")
