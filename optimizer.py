@@ -52,10 +52,10 @@ def run_optimizer(code_module):
             in_func = False
             file_text_out.append(line)
 
-        elif (in_func and len(line) > 0):
+        elif (in_func and len(line) > 0 and line[-1] != ':'):
             file_text_out.append("  " + line)
 
-        elif (not in_func):
+        elif (not in_func or (len(line) > 0 and line[-1] == ':')):
             file_text_out.append(line)
 
     return file_text_out
@@ -99,7 +99,14 @@ def constant_propagation(file_text, keywords):
             file_text_edit[i] = " ".join(tmp_list)
 
         elif ("icmp" in tmp_list):
-            print("TO DO: Constant propogation for comparisons")
+            # Comparison operation - substitute values already found
+            if (tmp_list[5] in variable_values):
+                tmp_list[5] = variable_values[tmp_list[5]]
+                
+            if (tmp_list[6] in variable_values):
+                tmp_list[6] = variable_values[tmp_list[6]]
+                
+            file_text_edit[i] = " ".join(tmp_list)
 
     if (file_text == file_text_edit):
         return((0, "file_text_edit"))
@@ -124,7 +131,7 @@ def constant_folding(file_text, keywords):
         # Perform substitutions on this line (technically constant propogation)
         for j in range(1, len(tmp_list)):
             if (tmp_list[j] in variable_values):
-                print("Replacing " + tmp_list[j] + " with " + variable_values[tmp_list[j]])
+                #print("Replacing " + tmp_list[j] + " with " + variable_values[tmp_list[j]])
                 tmp_list[j] = variable_values[tmp_list[j]]
         file_text_edit[i] = " ".join(tmp_list)
 
@@ -156,8 +163,34 @@ def constant_folding(file_text, keywords):
             # Remove unneeded line
             file_text_edit[i] = ""
 
-        elif ("icmp" in tmp_list):
-            print("TO DO: Constant propogation for comparisons")
+        elif (
+            "icmp" in tmp_list and
+            tmp_list[5].isdigit() and
+            tmp_list[6].isdigit()
+        ):
+            # Comparison operation of constants
+            a = int(tmp_list[5])
+            b = int(tmp_list[6])
+
+            if (tmp_list[3] == "sgt"):
+                cond = (a > b)
+            elif (tmp_list[3] == "slt"):
+                cond = (a < b)
+            elif (tmp_list[3] == "sge"):
+                cond = (a >= b)
+            elif (tmp_list[3] == "sle"):
+                cond = (a <= b)
+            elif (tmp_list[3] == "eq"):
+                cond = (a == b)
+            elif (tmp_list[3] == "ne"):
+                cond = (a != b)
+            
+            c = 1 if (cond) else 0
+
+            # Store folded value in dictionary
+            variable_values[tmp_list[0]] = str(c)
+            # Remove unneeded line
+            file_text_edit[i] = ""
 
     if (file_text == file_text_edit):
         return((0, "file_text_edit"))
