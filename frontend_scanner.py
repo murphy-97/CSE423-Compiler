@@ -41,6 +41,10 @@ def run_scanner(code_lines):
     for char in chars_array:
         entire_doc = entire_doc.replace(char, "$char$", 1)
 
+    entire_doc = entire_doc.replace("/*", "$comment_start$")
+    entire_doc = entire_doc.replace("*/", "$comment_end$")
+    entire_doc = entire_doc.replace("//", "$comment$")
+
     entire_doc = entire_doc.replace("++", "$plus$")
     entire_doc = entire_doc.replace("--", "$minus$")
     entire_doc = entire_doc.replace("+=", "$plus_equals$")
@@ -64,16 +68,28 @@ def run_scanner(code_lines):
     for value in replace_space_array:
         entire_doc = entire_doc.replace(value, " "+value+" ")
 
-    # remove line comments (must be before line break removal)
-    entire_doc = re.sub(r'//.*?\n', "\n", entire_doc)
-
     # prepare for line counts for error reporting and remove line breaks
     entire_doc = entire_doc.replace("\n", " $newline$ ")
     line_counter = 1
 
     # remove block comments (must be after line break removal)
-    entire_doc = re.sub(r'//.*?$', "\n", entire_doc)
-    entire_doc = re.sub(r'\/\*.*\*\/', "", entire_doc)
+    while (entire_doc.find("$comment_start$") > -1):
+        com_start = entire_doc.find("$comment_start$")
+        com_end = com_start + entire_doc[com_start:].find("$comment_end$")
+        doc_removal = entire_doc[:com_start]
+        if (com_end > -1):
+            doc_removal += entire_doc[com_end+len("$comment_end$"):]
+        entire_doc = doc_removal
+
+    # remove line comments (must be after line break removal)
+    while (entire_doc.find("$comment$") > -1):
+        com_start = entire_doc.find("$comment$")
+        com_end = com_start + entire_doc[com_start:].find("$newline$")
+        print("Removing range [" + str(com_start) + "," + str(com_end) + "]")
+        doc_removal = entire_doc[:com_start]
+        if (com_end > -1):
+            doc_removal += entire_doc[com_end+len("$newline$"):]
+        entire_doc = doc_removal
 
     # remove extra characters
     entire_doc = ' '.join(entire_doc.split())
