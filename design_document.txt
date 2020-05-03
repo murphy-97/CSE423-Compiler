@@ -127,8 +127,11 @@ ASM BUILDER (BACKEND):
     if statements:                  complete
     return statemnts:               complete
     ++ --:                          complete
-    
     variable declaration:           complete
+
+    function calling:               complete(ish)
+                                    - See parser section above for limitations
+                                      on function calling
 
     fuction prototypes:             incomplete
                                     (are they necessary at this stage?)
@@ -137,10 +140,6 @@ ASM BUILDER (BACKEND):
 
     for statments:                  incomplete
                                     (would be converted to while by parser)
-
-    function calling:               complete(ish)
-                                    - See parser section above for limitations
-                                      on function calling
 
   OPTIMIZER
     Constant Propgation             complete
