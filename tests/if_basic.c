@@ -1,8 +1,9 @@
 int main()
 {
     int x = 1;
+    int b = 2;
     if (x > 2) {
-        return 3;
+        b = b + 3;
     }
-    return 21;
+    return b;
 }

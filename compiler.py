@@ -37,6 +37,7 @@ def main(args=None):
     opt_print_ir = False    # Print IR output in run_frontend()
     opt_print_opt = False   # Print optimizer output in this function
     opt_print_asm = False   # Print backend output in this function
+    DEBUG = False           # Used to print out stack traces
 
     try:
         # Omit first argument (module name) by list slice

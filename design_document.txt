@@ -173,14 +173,4 @@ ASM BUILDER (BACKEND):
 
 === KNOWN BUGS & ISSUES ========================================================
 
-- Function parameters cannot be modified via =, +=, -=, etc. This is because of
-  the reverse-level-order tree traversal used by the IR builder. The llvmlite
-  library does not allow for modifications to be made to function parameters as
-  they can be made to global variables (in our implementation of the IR builder,
-  llvmlite's global variables are used as a placeholder for local variables).
-  However, due to the non-linear traversal of the parse tree used to build the
-  IR, the left side of any assignment will reference the initial variable
-  associated with the parameter rather than the newly created local variable. If
-  we had more time to work on this project, we could devise a new way of
-  traversing the parse tree that would be linear with respect to instruction
-  order.
+- None known that are not discussed above
