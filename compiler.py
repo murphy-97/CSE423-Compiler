@@ -117,7 +117,15 @@ def main(args=None):
                     )
 
                     print('\nOptimizing...')
+                    print("=== PRE-OPTIMIZER ====")
+                    print(code_ir)
+                    print("======================")
                     code_ir = optimizer.run_optimizer(code_ir)
+                    print("=== POST-OPTIMIZER ===")
+                    for line in code_ir:
+                        print(line)
+                    print("======================")
+                    sys.exit(0)
 
                     if (opt_print_opt):
                         print("====== OPTIMZED IR OUTPUT ==")
