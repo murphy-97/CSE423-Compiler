@@ -332,7 +332,7 @@ def build_llvm(ast):
                         assert(len(ast.children(iter_node.identifier)) == 0)
 
                         var_type = ""
-                        is_numeral = iter_node.tag.isdigit() # if true, then int
+                        is_numeral = uf.IsInt(iter_node.tag) # if true, then int
 
                         if (is_numeral):
                             var_type = "int"

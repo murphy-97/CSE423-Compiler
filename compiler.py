@@ -125,6 +125,7 @@ def main(args=None):
                             print(line)
 
                     code_source = backend.run_backend(code_ir)
+
                     if (opt_print_asm):
                         print("====== ASM BUILDER OUTPUT ==")
                         print(code_source)

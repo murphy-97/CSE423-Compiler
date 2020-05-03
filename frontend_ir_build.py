@@ -12,6 +12,8 @@ TO DO:
 from treelib import Node, Tree
 from llvmlite import ir
 
+import utility_funcs as uf
+
 # Debug values
 ALLOW_IMPLICIT_VAR_DEC = False
 
@@ -316,7 +318,7 @@ def build_block(ast, block_root, global_vars, func_params, function, builder):
                 assert(len(ast.children(iter_node.identifier)) == 0)
 
                 var_type = ""
-                is_numeral = iter_node.tag.isdigit() # if true, then int
+                is_numeral = uf.IsInt(iter_node.tag) # if true, then int
 
                 if (is_numeral):
                     var_type = "int"
@@ -631,7 +633,7 @@ def get_constant(var_value, var_type=None):
     # Determine type
     if (var_type is None):
         var_type = ""
-        is_numeral = var_value.isdigit() # if true, then int
+        is_numeral = uf.IsInt(var_value) # if true, then int
 
         if (is_numeral):
             var_type = "int"

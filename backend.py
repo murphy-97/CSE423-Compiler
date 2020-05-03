@@ -6,7 +6,7 @@ __cmp_count = 0     # Used to name jump labels in comparisons
 INIT_VARS_TO_ZERO = True
 
 ### Main method for backend module
-def run_backend(code_lines):
+def run_backend(ir_split):
     """Takes a list of code lines and returns a list of processed code lines"""
     # TO DO: Implement backend
     print("\nBuilding ASM...")
@@ -20,8 +20,7 @@ def run_backend(code_lines):
     fun_body_lines = []
     def_lines = []
     tmp_arr = []
-    ir = str(code_lines)
-    ir_split = ir.split("\n")
+    ir = "\n".join(ir_split)
     tmp = define_bounds(ir)
     def_lines = tmp[0]
     fun_body_lines = tmp[1]

@@ -1,6 +1,8 @@
 # CSE423 Compilers
 # backend.py: optimizer systems for C-to-ASM compiler implemented in Python
 
+import utility_funcs as uf
+
 ### Main method for optimizer module
 def run_optimizer(code_module):
     # Convert module into lines
@@ -72,11 +74,11 @@ def constant_propagation(file_text, keywords):
 
         tmp_list = file_text_edit[i].split(" ")
 
-        if ("store" in tmp_list and tmp_list[2].isdigit()):
+        if ("store" in tmp_list and uf.IsInt(tmp_list[2])):
             # Place in dictionary for later load commands
             variable_values[tmp_list[4]] = tmp_list[2]
             # Store line no longer needed
-            #file_text_edit[i] = ""
+            file_text_edit[i] = ""
 
         elif ("load" in tmp_list and tmp_list[5] in variable_values):
             # Place in dictionary for later substitution
@@ -139,8 +141,8 @@ def constant_folding(file_text, keywords):
         if (
             len(tmp_list) == 6 and
             tmp_list[1] == "=" and
-            tmp_list[4].isdigit() and
-            tmp_list[5].isdigit() and
+            uf.IsInt(tmp_list[4]) and
+            uf.IsInt(tmp_list[5]) and
             not "icmp" in tmp_list
         ):
             # Arithmetic operation of constants
@@ -157,6 +159,10 @@ def constant_folding(file_text, keywords):
                 c = a // b  # // is integer division
             elif (tmp_list[2] == "frem"):
                 c = a % b
+            elif (tmp_list[2] == "shl"):
+                c = a << b
+            elif (tmp_list[2] == "ashr"):
+                c = a >> b
 
             # Store folded value in dictionary
             variable_values[tmp_list[0]] = str(c)
@@ -165,8 +171,8 @@ def constant_folding(file_text, keywords):
 
         elif (
             "icmp" in tmp_list and
-            tmp_list[5].isdigit() and
-            tmp_list[6].isdigit()
+            uf.IsInt(tmp_list[5]) and
+            uf.IsInt(tmp_list[6])
         ):
             # Comparison operation of constants
             a = int(tmp_list[5])
