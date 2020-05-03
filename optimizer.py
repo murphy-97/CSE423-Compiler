@@ -42,7 +42,14 @@ def run_optimizer(code_module):
             # print(file_text[bound[0]:bound[1]])
             # print("\n"),
 
-    # Remove blank lines and indent instructions that occur within functions
+    # Remove unsused stores (initial call)
+    file_text = rem_extra_stores(file_text)
+    # Remove unused load statements
+    file_text = rem_extra_loads(file_text)
+    # Remove unused store statements (must be repeated after load)
+    file_text = rem_extra_stores(file_text)
+
+    # CLEAN-UP: Remove blank lines and indent instructions that occur within functions
     in_func = False
     file_text_out = []
     for line in file_text:
@@ -70,21 +77,27 @@ def constant_propagation(file_text, keywords):
 
     for i in range(0, len(file_text_edit)):
         file_text_edit[i] = " ".join(file_text_edit[i].split())
-        file_text_edit[i] = file_text_edit[i].replace(",", "")
+        file_text_edit[i] = file_text_edit[i].replace("(", " ")
+        file_text_edit[i] = file_text_edit[i].replace(")", " ")
+        file_text_edit[i] = file_text_edit[i].replace(",", " ")
 
-        tmp_list = file_text_edit[i].split(" ")
+        tmp_list = file_text_edit[i].strip().split(" ")
 
         if ("store" in tmp_list and uf.IsInt(tmp_list[2])):
             # Place in dictionary for later load commands
             variable_values[tmp_list[4]] = tmp_list[2]
-            # Store line no longer needed
-            file_text_edit[i] = ""
 
         elif ("load" in tmp_list and tmp_list[5] in variable_values):
             # Place in dictionary for later substitution
             variable_values[tmp_list[0]] = variable_values[tmp_list[5]]
-            # Load line no longer needed
-            file_text_edit[i] = ""
+
+        elif ("call" in tmp_list):
+            # Check function parameters for substitution
+            for j in range(6, len(tmp_list), 2):
+                if (tmp_list[j] in variable_values):
+                    tmp_list[j] = variable_values[tmp_list[j]]
+                
+            file_text_edit[i] = " ".join(tmp_list)
 
         elif (
             len(tmp_list) == 6 and
@@ -109,6 +122,14 @@ def constant_propagation(file_text, keywords):
                 tmp_list[6] = variable_values[tmp_list[6]]
                 
             file_text_edit[i] = " ".join(tmp_list)
+
+        elif ("ret" in tmp_list):
+            # Return statement - substitute values already found
+            if (tmp_list[2] in variable_values):
+                tmp_list[2] = variable_values[tmp_list[2]]
+                
+            file_text_edit[i] = " ".join(tmp_list)
+
 
     if (file_text == file_text_edit):
         return((0, "file_text_edit"))
@@ -222,6 +243,54 @@ def get_bounds_for_functions(ir_lines):
         tmp_list = [function_locs[i], function_locs[i+1]]
         output_list.append(tmp_list)
     return (output_list)
+    
+def rem_extra_stores(ir_lines):
+    # A store is extra if its value is never loaded
+    for i in range(0, len(ir_lines)):
+        i_split = ir_lines[i].split()
 
-if __name__ == '__main__':
-    main()
+        if ("store" in i_split):
+            value_used = False
+
+            for j in range(i+1, len(ir_lines)):
+                j_split = ir_lines[j].split()
+                if ("load" in j_split and i_split[4] == j_split[5]):
+                    # This stored value is loaded
+                    value_used = True
+                    break
+                elif ("ret" in j_split and i_split[4] == j_split[2]):
+                    # Value is used by a return statement
+                    value_used = True
+                    break
+                elif ("store" in j_split and i_split[4] == j_split[4]):
+                    # A new value is stored before the old value is loaded
+                    break
+
+            # If the value was not used, then remove the line
+            if (not value_used):
+                ir_lines[i] = ""
+
+    return ir_lines
+
+def rem_extra_loads(ir_lines):
+    # A load is extra if the loaded value is never used
+    for i in range(0, len(ir_lines)):
+        i_split = ir_lines[i].split()
+
+        if ("load" in i_split):
+            value_used = False
+
+            for j in range(i+1, len(ir_lines)):
+                j_split = ir_lines[j].split()
+
+                # Check all terms EXCEPT the one being assigned
+                for k in range(j+1, len(j_split)):
+                    if (j_split[k] == i_split[0]):
+                        value_used = True
+                        break
+
+            # If the value was not used, then remove the line
+            if (not value_used):
+                ir_lines[i] = ""
+
+    return ir_lines

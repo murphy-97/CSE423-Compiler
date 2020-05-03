@@ -1,12 +1,12 @@
 int main()
 {
-	int a;
-	int b;
+	int a = 1;
+	int b = 2;
 	int c;
 	c = 0;
 	int d;
-	int e;
-	c = 0;
+	int e = 3;
+	c = 4;
 	int f;
 	f = (a + b / c) + (e);
 	int g;

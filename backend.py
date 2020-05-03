@@ -180,7 +180,7 @@ def cgrab_params(code_line, id_variables, id_value, output_code):
     #make sure order is correct for operands
     new_id_value = id_value
     variables = []
-    split = code_line.replace(",", "")
+    split = code_line.replace(",", "")  # ( ) , likely replaced by optimizer
     split = split.replace("(", " ")
     split = split.replace(")",  " ")
     split = split.replace("\t", "")
@@ -540,17 +540,11 @@ def get_fun_name(input_line):
         return input_line[begin_name_index:end_name_index]
 
 def get_fun_parameters(input_line):
-        begin_name_index = input_line.find("(") + 1
-        end_name_index = input_line.find(")")
-        parameter_string = input_line[begin_name_index:end_name_index]
-        params = parameter_string.split(",")
-        for i in range(0, len(params)):
-            params[i] = params[i].replace("i32", "")
-            # params[i] = params[i].replace("\"", "")
-            # params[i] = params[i].replace("%", "")
-            params[i] = " ".join(params[i].split())
-            if (params[i] == ""):
-                params.remove("")
+        line_split = input_line.split()
+        params = []
+        for i in range(4, len(line_split), 2):
+            params += [line_split[i]]
+
         return params
 
 

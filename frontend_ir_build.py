@@ -26,6 +26,8 @@ __block_counter = 0     # Guarantees that blocks have globally-unique names
 __var_nodes = {}        # Used to store which nodes have declared variables
 __symbol_table = {}     # Used to read variable types from the parser
 
+__redefined_param = {}  # Used to track params that have been modified in a function
+
 # Type dictionary used in parsing the AST
 __type_dict = {
     "int":    ir.IntType(32),   # Assuming 4 byte ints for now
@@ -42,6 +44,8 @@ def build_llvm(ast, symbol_table):
     global __module
     __module = ir.Module(name="program")
 
+    global __redefined_param
+
     assert(ast.get_node(ast.root).tag == "program")
     global_vars = {}    # Stores global variable objects
 
@@ -52,6 +56,9 @@ def build_llvm(ast, symbol_table):
             func_name = node.tag[5:]
             func_return = ""
             func_params = []
+
+            # Reset modified variables
+            __redefined_param = {}
 
             # Iterate through node children to:
             #   Define type
@@ -545,6 +552,8 @@ def set_variable(value, var_name, func_locals, func_params, function, builder, g
         )
         __variable_counter += 1
         operand = func_locals[var_name]
+
+        raise Exception("Attempting to change parameter value. See design document 'Known Bugs & Issues' for why this doesn't work.")
 
     elif (var_name in global_vars):
         # 3rd check: variables from the above scopes

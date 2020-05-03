@@ -63,6 +63,19 @@ IR BUILDER:
   builder adds instructions to blocks, blocks to functions, and functions to the
   overall module that contains the entire IR.
 
+OPTIMIZER:
+  The optimizer first performs alternating passes of constant propogation and
+  constant folding on each function. Once all functions have reached a stable
+  state, the optimizer moves on to remove unused variables. First, it removes
+  all "store" instructions for which the stored value is never used (either the
+  variable is never loaded, or a new store instruction changes the variable's
+  value before it is loaded). Next, any unused "load" instructions are removed.
+  If the value into which the variable is loaded is never used, the load
+  instruction is removed. Finally, another pass is made to remove an "store"
+  instructions rendered unused by the removal of unused load statements. It is
+  necessary to remove store statements before and after removing load statements
+  to remove unused patterns that would otherwise protect themselves.
+
 ASM BUILDER (BACKEND):
   The ASM builder reads in the IR line by line and checks. Most IR operations
   translate very directly into assembly operations. For these cases, the builder
@@ -103,7 +116,7 @@ ASM BUILDER (BACKEND):
 
     fuction prototypes:             incomplete 
     else statement:                 incomplete
-    for statments:                  incomplete
+    for statments:                  incomplete (assumed user will use while)
     ++ --:                          incomplete
   
   IR BUILDER:
@@ -129,7 +142,20 @@ ASM BUILDER (BACKEND):
                                     - See parser section above for limitations
                                       on function calling
 
-ASM BUILDER:
+  OPTIMIZER
+    Constant Propgation             complete
+
+    Constant Folding                complete (but not independent/pure)
+                                    - Folding process relies on some internal
+                                      propogation due to limits of the LLVM IR.
+                                      It isn't "pure" folding, but it
+                                      accomplishes the work of folding plus the
+                                      propogation of any values resluting from
+                                      folding.
+
+    Removal of unused variables     complete
+
+  ASM BUILDER:
     Complete.
     Limitations on parser and IR builder would not result in new IR patterns
     that the ASM builder would not recognize and handle.
@@ -144,25 +170,17 @@ ASM BUILDER:
                                       number reporting errors
                                     - Line number information is not preserved
                                       after parsing
-                                     
-    Function parameters and local parameters cannot have the same name
-    Function parameters cannot be redefined via =, +=, -=, etc
-    Local variables *can* be redefeind via =, +=, -=, etc
-    parameter names cannot contain ")" or "("
 
 === KNOWN BUGS & ISSUES ========================================================
 
-- Anything in between multiple line comments is ignored.
-
-  int main()
-  {
-    Not ignored
-    /* Correctly ignored */
-    Should not be ignored but is ignored
-    /* Correctly ignored */
-    Not ignored
-  }
-
-  This issue is due to our use of regex to detect multiple line comments and can
-  be corrected by replacing the regex with an interative search or use of string
-  methods.
+- Function parameters cannot be modified via =, +=, -=, etc. This is because of
+  the reverse-level-order tree traversal used by the IR builder. The llvmlite
+  library does not allow for modifications to be made to function parameters as
+  they can be made to global variables (in our implementation of the IR builder,
+  llvmlite's global variables are used as a placeholder for local variables).
+  However, due to the non-linear traversal of the parse tree used to build the
+  IR, the left side of any assignment will reference the initial variable
+  associated with the parameter rather than the newly created local variable. If
+  we had more time to work on this project, we could devise a new way of
+  traversing the parse tree that would be linear with respect to instruction
+  order.
