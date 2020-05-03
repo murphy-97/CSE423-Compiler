@@ -37,6 +37,9 @@ def run_backend(ir_split, file_name):
     for i in range (0, len(fun_body_lines)):
         tmp_def_line = ir_split[def_lines[i]]
         fun_name = get_fun_name(tmp_def_line) #is a string"
+        if (fun_name == "main"):
+            fun_name = "_start"
+
         fun_parameters = get_fun_parameters(tmp_def_line) #is a list
         fun_code = get_fun_code(ir_split, fun_body_lines[i], fun_name, fun_parameters) #is a list
         # print("\n")
@@ -48,7 +51,7 @@ def run_backend(ir_split, file_name):
         # print(tmp_def_line, "\n")
     output_code.insert(0, '')
     output_code.insert(0, '\t.text')
-    output_code.insert(0, '\t.file   "' + file_name + '"')
+    output_code.insert(0, '\t.file   "' + file_name.split('/')[-1] + '"')
     #output_code.insert(0, "\t.section\t__TEXT,__text,regular,pure_instructions")
     
     # for line in output_code:
@@ -73,7 +76,7 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
     
     output_code.append("\t.globl  " + fun_name)
     output_code.append("\t.type   " + fun_name + ", @function")
-    output_code.append("_" + fun_name + ":")
+    output_code.append(fun_name + ":")
     output_code.append(".LFB" + str(__func_count) + ":")
 
     #output_code.append("\t.globl  "+"_" + fun_name+"\t\t\t\t\t## -- Begin function "+fun_name)
@@ -185,11 +188,11 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
 
     if (found_return_flag == 0):
         output_code.append("\tpopq\t%rbp")
-        output_code.append("\tretq")
+        output_code.append("\tret")
 
     output_code.append(".LFE" + str(__func_count) + ":")
     __func_count += 1
-    output_code.append("#\t.size   " + fun_name + ", .-" + fun_name)
+    output_code.append("\t.size   " + fun_name + ", .-" + fun_name)
     output_code.append("")
     #output_code.append("\t\t\t\t\t\t\t\t\t\t## -- End function")
     # new_code.insert(0, "\n.p2align")
