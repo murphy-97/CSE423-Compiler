@@ -193,6 +193,8 @@ def help_func_expression(grammar, tokens, function=None):
             tree = Tree()
             if (tokens[0][0] == "_start"):
                 raise Exception("Function name _start is reserved for assembly")
+            elif (tokens[0][0] == "main"):
+                tokens[0][0] = "_start"
             call_node = Node(tag="func:"+tokens[0][0])
             tree.add_node(call_node, parent=None)
             tokens_skip += 2
@@ -261,6 +263,10 @@ def help_func_expression(grammar, tokens, function=None):
                 # Found a function call without parameters
                 tokens_skip += 1
                 tree = Tree()
+                if (tokens[0][0] == "_start"):
+                    raise Exception("Function name _start is reserved for assembly")
+                elif (tokens[0][0] == "main"):
+                    tokens[0][0] = "_start"
                 value_node = Node(tag="func:"+tokens[0][0])
                 tree.add_node(value_node, parent=None)
                 return [tree, tokens_skip]
@@ -330,6 +336,10 @@ def help_func_funDeclaration(grammar, tokens):
     body_node = Node(tag="func_body")
 
     # create root node
+    if (tokens[1][0] == "_start"):
+        raise Exception("Function name _start is reserved for assembly")
+    elif (tokens[1][0] == "main"):
+        tokens[1][0] = "_start"
     func_name = tokens[1][0]
     func_root = Node(tag="func:"+func_name)
     return_type = Node(tag=tokens[0][0])
