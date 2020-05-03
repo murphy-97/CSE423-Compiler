@@ -40,7 +40,25 @@ def run_optimizer(code_module):
             # print(file_text[bound[0]:bound[1]])
             # print("\n"),
 
-    return file_text
+    # Remove blank lines and indent instructions that occur within functions
+    in_func = False
+    file_text_out = []
+    for line in file_text:
+        if (not in_func and '{' in line):
+            in_func = True
+            file_text_out.append(line)
+
+        elif (in_func and '}' in line):
+            in_func = False
+            file_text_out.append(line)
+
+        elif (in_func and len(line) > 0):
+            file_text_out.append("  " + line)
+
+        elif (not in_func):
+            file_text_out.append(line)
+
+    return file_text_out
 
 #returns 1 on success and change in input
 #returns 0 on failure and no change in input
@@ -58,7 +76,7 @@ def constant_propagation(file_text, keywords):
             # Place in dictionary for later load commands
             variable_values[tmp_list[4]] = tmp_list[2]
             # Store line no longer needed
-            file_text_edit[i] = ""
+            #file_text_edit[i] = ""
 
         elif ("load" in tmp_list and tmp_list[5] in variable_values):
             # Place in dictionary for later substitution
@@ -80,23 +98,9 @@ def constant_propagation(file_text, keywords):
                 
             file_text_edit[i] = " ".join(tmp_list)
 
-    # Remove empty lines
-    file_text_tmp = ""
-    in_func = False
-    for line in file_text_edit:
-        if ('{' in line):
-            in_func = True
-            file_text_tmp += line + "\n"
-        elif ('}' in line):
-            in_func = False
-            file_text_tmp += line + "\n"
-        elif (in_func and line != ""):
-            file_text_tmp += "  " + line + "\n"
+        elif ("icmp" in tmp_list):
+            print("TO DO: Constant propogation for comparisons")
 
-    file_text_edit = file_text_tmp.split('\n')
-
-    print("Stored Values:")
-    print(variable_values)
     if (file_text == file_text_edit):
         return((0, "file_text_edit"))
     else:
@@ -105,36 +109,55 @@ def constant_propagation(file_text, keywords):
 #returns 1 on success and change in input
 #returns 0 on failure and no change in input
 def constant_folding(file_text, keywords):
-    # BEGIN DEBUG CODE - DISABLE CONSTANT FOLDING
-    return((0, "file_text_edit"))
-    # END DEBUG CODE
-
     file_text_edit = list(file_text)
-    operators = ["+", "-", "*", "/", "%"]
-    skip_flag = 0
+    variable_values = {}
+
+    # NOTE: LLVM IR does not support direct declaration of variables
+    # Constant folding requires some level of constant propogation
+
     for i in range(0, len(file_text_edit)):
         file_text_edit[i] = " ".join(file_text_edit[i].split())
+        file_text_edit[i] = file_text_edit[i].replace(",", "")
 
         tmp_list = file_text_edit[i].split(" ")
-        #add and remove from dictionary
-        if (("=" in tmp_list) and (len(tmp_list) > 3)):
-            skip_flag = 0
-            for j in range (2, len(tmp_list)):
-                if ((tmp_list[j] in operators) or (tmp_list[j].isdigit())):
-                    pass
-                else:
-                    skip_flag = 1
-            #evaluate and fold
-            if (skip_flag == 0):
-                tmp_store = (eval(" ".join(tmp_list[2:])))
-                tmp_store = str(tmp_store)
-                del tmp_list[2:]
-                tmp_list.append(tmp_store)
 
+        # Perform substitutions on this line (technically constant propogation)
+        for j in range(1, len(tmp_list)):
+            if (tmp_list[j] in variable_values):
+                print("Replacing " + tmp_list[j] + " with " + variable_values[tmp_list[j]])
+                tmp_list[j] = variable_values[tmp_list[j]]
         file_text_edit[i] = " ".join(tmp_list)
 
-                # print("Propagated")
-        # print(" ".join(tmp_list))
+        # Perform folding on this line
+        if (
+            len(tmp_list) == 6 and
+            tmp_list[1] == "=" and
+            tmp_list[4].isdigit() and
+            tmp_list[5].isdigit() and
+            not "icmp" in tmp_list
+        ):
+            # Arithmetic operation of constants
+            a = int(tmp_list[4])
+            b = int(tmp_list[5])
+
+            if (tmp_list[2] == "fadd"):
+                c = a + b
+            elif (tmp_list[2] == "fsub"):
+                c = a - b
+            elif (tmp_list[2] == "fmul"):
+                c = a * b
+            elif (tmp_list[2] == "fdiv"):
+                c = a // b  # // is integer division
+            elif (tmp_list[2] == "frem"):
+                c = a % b
+
+            # Store folded value in dictionary
+            variable_values[tmp_list[0]] = str(c)
+            # Remove unneeded line
+            file_text_edit[i] = ""
+
+        elif ("icmp" in tmp_list):
+            print("TO DO: Constant propogation for comparisons")
 
     if (file_text == file_text_edit):
         return((0, "file_text_edit"))
