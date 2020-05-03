@@ -96,9 +96,9 @@ def main(args=None):
         usage()
         sys.exit(1)
 
-    # If user did not specify output file, assume i-file.ASM
+    # If user did not specify output file, assume i-file.S
     if not o_file:
-        o_file = i_file + ".ASM"
+        o_file = i_file + ".S"
 
     # DEBUG: Print command line arguments to the user
     if DEBUG:
@@ -121,15 +121,16 @@ def main(args=None):
                         opt_print_ir    # Command line arg: print IR out
                     )
 
-                    print('\nOptimizing...')
+                    print('Optimizing...')
                     code_ir = optimizer.run_optimizer(code_ir)
 
                     if (opt_print_opt):
                         print("====== OPTIMZED IR OUTPUT ==")
                         for line in code_ir:
                             print(line)
+                        print("")
 
-                    code_source = backend.run_backend(code_ir)
+                    code_source = backend.run_backend(code_ir, i_file)
 
                     if (opt_print_asm):
                         print("====== ASM BUILDER OUTPUT ==")
@@ -171,7 +172,7 @@ def usage():
         " --debug  Prints stack traces for raised exceptions"
     )
 
-    print("If no ouptut file is specified, output written is to 'input-file'.ASM")
+    print("If no ouptut file is specified, output written is to 'input-file'.S")
 
 # Boilerplate for calling main by running this module
 if __name__ == "__main__":

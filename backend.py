@@ -3,14 +3,17 @@
 
 __var_adrs = {}     # Stores addresses allocated by the store command
 __cmp_count = 0     # Used to name jump labels in comparisons
+__func_count = 0
 INIT_VARS_TO_ZERO = True
 
 ### Main method for backend module
-def run_backend(ir_split):
+def run_backend(ir_split, file_name):
     """Takes a list of code lines and returns a list of processed code lines"""
     # TO DO: Implement backend
-    print("\nBuilding ASM...")
+    print("Building ASM...")
 
+    global __func_count
+    __func_count = 0
     global __var_adrs
     __var_adrs = {}
     global __cmp_count
@@ -33,7 +36,7 @@ def run_backend(ir_split):
 
     for i in range (0, len(fun_body_lines)):
         tmp_def_line = ir_split[def_lines[i]]
-        fun_name = get_fun_name(tmp_def_line) #is a string
+        fun_name = get_fun_name(tmp_def_line) #is a string"
         fun_parameters = get_fun_parameters(tmp_def_line) #is a list
         fun_code = get_fun_code(ir_split, fun_body_lines[i], fun_name, fun_parameters) #is a list
         # print("\n")
@@ -43,7 +46,10 @@ def run_backend(ir_split):
             output_code.append(line)
         # print("code:", fun_code)
         # print(tmp_def_line, "\n")
-    output_code.insert(0, "\t.section\t__TEXT,__text,regular,pure_instructions")
+    output_code.insert(0, '')
+    output_code.insert(0, '\t.text')
+    output_code.insert(0, '\t.file   "' + file_name + '"')
+    #output_code.insert(0, "\t.section\t__TEXT,__text,regular,pure_instructions")
     
     # for line in output_code:
     #     print(line)
@@ -56,18 +62,26 @@ def get_fun_code(ir_split, indexs, fun_name, fun_parameters):
     return fix_raw_code(raw_code, indexs, fun_name, fun_parameters)
 
 def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
+    global __func_count
+
     new_code = raw_code
     output_code = []
 
     for i in range(1, len(new_code)):
         new_code[i] = " ".join(new_code[i].split())
         new_code[i] = "\t" + new_code[i]
-    output_code.append("\t.globl  "+"_" + fun_name+"\t\t\t\t\t## -- Begin function "+fun_name)
-    output_code.append("\t.p2align\t4, 0x90")
-    output_code.append("_" + fun_name + ":" + "\t\t\t\t\t## @" + fun_name)
-    output_code.append("## %bb.0:")
-    output_code.append("\tpushq\t%rbp")
-    output_code.append("\tmoveq\t%rsp, %rbp")
+    
+    output_code.append("\t.globl  " + fun_name)
+    output_code.append("\t.type   " + fun_name + ", @function")
+    output_code.append("_" + fun_name + ":")
+    output_code.append(".LFB" + str(__func_count) + ":")
+
+    #output_code.append("\t.globl  "+"_" + fun_name+"\t\t\t\t\t## -- Begin function "+fun_name)
+    #output_code.append("\t.p2align\t4, 0x90")
+    #output_code.append("_" + fun_name + ":" + "\t\t\t\t\t## @" + fun_name)
+    #output_code.append("## %bb.0:")
+    output_code.append("\tpushq   %rbp")
+    output_code.append("\tmovq    %rsp, %rbp")
 
     passed_offset = 0
     local_offset = 0
@@ -172,7 +186,12 @@ def fix_raw_code(raw_code, indexs, fun_name, fun_parameters):
     if (found_return_flag == 0):
         output_code.append("\tpopq\t%rbp")
         output_code.append("\tretq")
-    output_code.append("\t\t\t\t\t\t\t\t\t\t## -- End function")
+
+    output_code.append(".LFE" + str(__func_count) + ":")
+    __func_count += 1
+    output_code.append("#\t.size   " + fun_name + ", .-" + fun_name)
+    output_code.append("")
+    #output_code.append("\t\t\t\t\t\t\t\t\t\t## -- End function")
     # new_code.insert(0, "\n.p2align")
     return output_code
 
@@ -488,7 +507,6 @@ def jmpgrab_params(code_line, id_variables, id_value, output_code):
 
     global __cmp_count
 
-    print("cmpgrab comparisons are a work in progress")
     new_id_value = id_value
     variables = []
     split = code_line.replace(",", "")

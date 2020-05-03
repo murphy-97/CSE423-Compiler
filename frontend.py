@@ -25,8 +25,9 @@ def run_frontend(code_lines, print_scn, print_prs, print_ir):
         print("====== SCANNER OUTPUT ======")
         for token in tokens:
             print(str(token))
+        print("")
 
-    print('\nParsing...')
+    print('Parsing...')
     grammar = prs.parse_grammar(open('grammar.txt', "r"))
     prs_out = prs.run_parser(tokens, grammar, clear_symbol_table=True)
     ast = prs_out[0]
@@ -36,13 +37,15 @@ def run_frontend(code_lines, print_scn, print_prs, print_ir):
     if (print_prs):
         print("====== PARSER OUTPUT =======")
         ast.show(key=lambda x: x.identifier, line_type='ascii')
+        print("")
 
     # Convert tree to IR
-    print("\nBuilding IR...")
+    print("Building IR...")
     ir = irb.build_llvm(ast, symbol_table)
     if (print_ir):
         print("====== IR OUTPUT ===========")
         print(ir)
+        print("")
 
     # Command line option to print IR output
 

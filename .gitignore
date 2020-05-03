@@ -1,7 +1,8 @@
 # Ignore compiled python
 *.pyc
 # Ignore compiled C code
-*.ASM
+*.S
+tests/*.S
 
 # Prerequisites
 *.d

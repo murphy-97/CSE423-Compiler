@@ -20,9 +20,7 @@ int main(void)
   int x;
   int y;
   a = func_dec(1, 2, 3, 4);
-  a = func_dec_2(1, 2, 3, 4, 5, 6, 7, 8, 9);
-  x = 2;
-  y = 3;
-  a = func_dec_3();
-  return 0;
+  x = func_dec_2(1, 2, 3, 4, 5, 6, 7, 8, 9);
+  y = func_dec_3();
+  return a + x + y;
 }
