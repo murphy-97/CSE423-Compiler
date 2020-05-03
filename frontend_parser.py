@@ -191,6 +191,8 @@ def help_func_expression(grammar, tokens, function=None):
         if (len(tokens) > 1 and tokens[0][1] == "ID" and tokens[1][1] == "("):
             # Create node with function name
             tree = Tree()
+            if (tokens[0][0] == "_start"):
+                raise Exception("Function name _start is reserved for assembly")
             call_node = Node(tag="func:"+tokens[0][0])
             tree.add_node(call_node, parent=None)
             tokens_skip += 2
